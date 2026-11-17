@@ -63,7 +63,7 @@ tfoot td{font-weight:600;border-bottom:0}
   <header>
     <div>
       <h1>Racha<span>Conta</span></h1>
-      <p class="sub">Divida as contas da casa, cada uma só entre quem participa.</p>
+      <p class="sub">Divida as contas da casa, bar, ou qualquer coisa, cada uma só entre quem participa.</p>
     </div>
     <div class="row">
       <input type="month" id="month" style="width:auto">
@@ -73,7 +73,7 @@ tfoot td{font-weight:600;border-bottom:0}
   </header>
 
   <section>
-    <h2>Moradores</h2>
+    <h2>Quem divide a conta</h2>
     <form class="row" id="addPerson">
       <input type="text" id="personName" placeholder="Nome (ex.: João)" autocomplete="off">
       <button type="submit">Adicionar</button>
@@ -82,7 +82,7 @@ tfoot td{font-weight:600;border-bottom:0}
   </section>
 
   <section>
-    <h2>Contas do mês</h2>
+    <h2>Contas a pagar</h2>
     <div id="bills"></div>
     <button id="addBill">+ Nova conta</button>
     <p class="hint">“Por peso”: use pesos diferentes quando alguém paga mais (ex.: quarto maior = 1,5; normal = 1). “Pago por” serve para calcular quem deve devolver quanto para quem.</p>
@@ -126,19 +126,8 @@ function parseMoney(s) {
 const parseNum = s => { const v = parseFloat(String(s).replace(',', '.')); return isFinite(v) && v > 0 ? v : 0; };
 const curMonth = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
 
-function defaults() {
-  const a = uid(), b = uid(), c = uid();
-  return {
-    month: curMonth(),
-    people: [{ id: a, name: 'Ana' }, { id: b, name: 'Bruno' }, { id: c, name: 'Carla' }],
-    bills: [
-      { id: uid(), name: 'Aluguel', amount: 300000, payer: a, mode: 'peso', parts: { [a]: 1.5, [b]: 1, [c]: 1 } },
-      { id: uid(), name: 'Condomínio', amount: 65000, payer: a, mode: 'igual', parts: { [a]: 1, [b]: 1, [c]: 1 } },
-      { id: uid(), name: 'Internet', amount: 12000, payer: b, mode: 'igual', parts: { [a]: 1, [b]: 1, [c]: 1 } },
-      { id: uid(), name: 'Streaming', amount: 5590, payer: c, mode: 'igual', parts: { [b]: 1, [c]: 1 } },
-    ],
-  };
-}
+function emptyBill() { return { id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts: {} }; }
+function defaults() { return { month: curMonth(), people: [], bills: [emptyBill()] }; }
 
 function encode(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function decode(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
@@ -206,9 +195,9 @@ function settle(bal) {
 function renderPeople() {
   $('#people').innerHTML = S.people.map(p => `
     <span class="chip" data-pid="${p.id}">
-      <input type="text" data-f="pname" value="${esc(p.name)}" aria-label="Nome">
+      <input type="text" data-f="pname" value="${esc(p.name)}" placeholder="Nome" aria-label="Nome">
       <button data-act="del-person" title="Remover">×</button>
-    </span>`).join('') || '<span class="muted">Adicione os moradores da casa.</span>';
+    </span>`).join('') || '<span class="muted">Adicione quem racha a conta.</span>';
 }
 
 function renderBills() {
@@ -216,7 +205,7 @@ function renderBills() {
   $('#bills').innerHTML = S.bills.map(b => `
     <div class="bill" data-bill="${b.id}">
       <div class="bill-top">
-        <input class="name" type="text" data-f="name" value="${esc(b.name)}" placeholder="Nome da conta">
+        <input class="name" type="text" data-f="name" value="${esc(b.name)}" placeholder="Nome da conta (ex.: Aluguel)">
         <input type="text" inputmode="decimal" data-f="amount" value="${showMoney(b.amount)}" placeholder="R$ 0,00">
         <select data-f="payer">
           <option value="">Ainda não foi paga</option>
@@ -225,6 +214,7 @@ function renderBills() {
         <button class="ghost" data-act="del-bill">Remover</button>
       </div>
       <div class="parts">
+        ${S.people.length ? '' : '<span class="muted">Adicione os rachadores acima para escolher quem divide esta conta.</span>'}
         ${S.people.map(p => {
           const on = p.id in b.parts;
           return `<span class="part ${on ? 'on' : ''}">
@@ -272,6 +262,7 @@ $('#addPerson').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('#personName').value.trim(); if (!name) return;
   const id = uid(); S.people.push({ id, name });
+  S.bills.forEach(b => { if (!Object.keys(b.parts).some(person) || Object.keys(b.parts).length === S.people.length - 1 && !b.amount) b.parts[id] = 1; });
   $('#personName').value = ''; renderAll();
 });
 
@@ -327,7 +318,7 @@ $('#reset').addEventListener('click', e => {
     return;
   }
   delete btn.dataset.armed; btn.textContent = 'Recomeçar do zero';
-  S = { month: curMonth(), people: [], bills: [] }; renderAll();
+  S = defaults(); renderAll();
 });
 // Dentro de um iframe (pré-visualização) o link compartilhável não funciona.
 try { if (window.self !== window.top) $('#share').style.display = 'none'; } catch (e) { $('#share').style.display = 'none'; }
