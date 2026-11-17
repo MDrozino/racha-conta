@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Racha Conta</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2328;--muted:#6b7078;--line:#e6e2d9;--accent:#2f6f5e;--accent-soft:#e3efe9;--warn:#b4532a;--radius:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 16px 64px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{margin:0;font-size:28px;letter-spacing:-.02em}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:2px 0 0}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 12px;font-weight:600}
+input,select,button{font:inherit;color:inherit}
+input[type=text],input[type=month],input[type=number],select{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:0;width:100%}
+input:focus,select:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
+button.ghost:hover{color:var(--warn)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input[type=text]{width:auto;flex:1;min-width:160px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{display:inline-flex;align-items:center;background:var(--accent-soft);border-radius:999px;padding:2px 2px 2px 4px}
+.chip input{border:0!important;background:transparent!important;width:9ch!important;padding:4px 8px!important}
+.chip button{border:0;background:transparent;padding:2px 10px;color:var(--muted)}
+.chip button:hover{color:var(--warn)}
+.bill{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.bill-top{display:grid;grid-template-columns:1fr 140px 190px auto;gap:8px}
+@media(max-width:640px){.bill-top{grid-template-columns:1fr 1fr}.bill-top .name{grid-column:1/-1}}
+.parts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.part{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.part.on{background:var(--accent-soft);border-color:var(--accent)}
+.part label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;user-select:none}
+.part input[type=checkbox]{accent-color:var(--accent);margin:0}
+.part .w{width:60px!important;padding:2px 6px!important;border-radius:8px}
+.part .share{color:var(--muted);font-size:13px}
+.mode{margin-left:auto;width:auto!important;font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:13px;color:var(--muted);font-weight:600}
+tfoot td{font-weight:600;border-bottom:0}
+.neg{color:var(--warn)}.pos{color:var(--accent)}
+.transfers{list-style:none;padding:0;margin:0}
+.transfers li{padding:10px 12px;background:var(--bg);border-radius:10px;margin:6px 0;display:flex;justify-content:space-between;gap:12px}
+.muted{color:var(--muted)}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Racha<span>Conta</span></h1>
+      <p class="sub">Divida as contas da casa, cada uma só entre quem participa.</p>
+    </div>
+    <div class="row">
+      <input type="month" id="month" style="width:auto">
+      <button id="share">Copiar link</button>
+      <button id="copy" class="primary">Copiar resumo</button>
+    </div>
+  </header>
+
+  <section>
+    <h2>Moradores</h2>
+    <form class="row" id="addPerson">
+      <input type="text" id="personName" placeholder="Nome (ex.: João)" autocomplete="off">
+      <button type="submit">Adicionar</button>
+    </form>
+    <div class="chips" id="people"></div>
+  </section>
+
+  <section>
+    <h2>Contas do mês</h2>
+    <div id="bills"></div>
+    <button id="addBill">+ Nova conta</button>
+    <p class="hint">“Por peso”: use pesos diferentes quando alguém paga mais (ex.: quarto maior = 1,5; normal = 1). “Pago por” serve para calcular quem deve devolver quanto para quem.</p>
+  </section>
+
+  <section>
+    <h2>Quanto cada um paga</h2>
+    <div class="tablewrap"><table id="matrix"></table></div>
+  </section>
+
+  <section class="grid2">
+    <div>
+      <h2>Saldo (contas já pagas)</h2>
+      <div class="tablewrap"><table id="balances"></table></div>
+    </div>
+    <div>
+      <h2>Acertos</h2>
+      <ul class="transfers" id="transfers"></ul>
+    </div>
+  </section>
+
+  <p class="hint" style="text-align:center">Os dados ficam salvos neste navegador. Use “Copiar link” para mandar tudo para os outros moradores. · <button class="ghost" id="reset">Recomeçar do zero</button></p>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'racha-conta-v1';
+const uid = () => Math.random().toString(36).slice(2, 9);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const fmt = c => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const showMoney = c => c ? (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+function parseMoney(s) {
+  s = String(s).replace(/[^\d,.]/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  const v = parseFloat(s);
+  return isFinite(v) ? Math.round(v * 100) : 0;
+}
+const parseNum = s => { const v = parseFloat(String(s).replace(',', '.')); return isFinite(v) && v > 0 ? v : 0; };
+const curMonth = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+
+function defaults() {
+  const a = uid(), b = uid(), c = uid();
+  return {
+    month: curMonth(),
+    people: [{ id: a, name: 'Ana' }, { id: b, name: 'Bruno' }, { id: c, name: 'Carla' }],
+    bills: [
+      { id: uid(), name: 'Aluguel', amount: 300000, payer: a, mode: 'peso', parts: { [a]: 1.5, [b]: 1, [c]: 1 } },
+      { id: uid(), name: 'Condomínio', amount: 65000, payer: a, mode: 'igual', parts: { [a]: 1, [b]: 1, [c]: 1 } },
+      { id: uid(), name: 'Internet', amount: 12000, payer: b, mode: 'igual', parts: { [a]: 1, [b]: 1, [c]: 1 } },
+      { id: uid(), name: 'Streaming', amount: 5590, payer: c, mode: 'igual', parts: { [b]: 1, [c]: 1 } },
+    ],
+  };
+}
+
+function encode(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function decode(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+
+function load() {
+  if (location.hash.startsWith('#d=')) {
+    try {
+      const d = decode(location.hash.slice(3));
+      history.replaceState(null, '', location.pathname + location.search);
+      if (d && Array.isArray(d.people) && Array.isArray(d.bills)) { setTimeout(() => toast('Dados do link carregados'), 300); return d; }
+    } catch (e) {}
+  }
+  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.people) return d; } catch (e) {}
+  return defaults();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+let S = load();
+const person = id => S.people.find(p => p.id === id);
+
+// Divide em centavos sem perder nenhum (maior resto).
+function split(b) {
+  const ids = Object.keys(b.parts).filter(person);
+  const w = ids.map(id => b.mode === 'peso' ? parseNum(b.parts[id]) : 1);
+  const sw = w.reduce((a, x) => a + x, 0);
+  const out = {};
+  if (!sw || !b.amount) return out;
+  const raw = w.map(x => b.amount * x / sw);
+  const fl = raw.map(Math.floor);
+  const rem = b.amount - fl.reduce((a, x) => a + x, 0);
+  const order = raw.map((r, i) => [r - fl[i], i]).sort((x, y) => y[0] - x[0]);
+  for (let k = 0; k < rem; k++) fl[order[k % order.length][1]]++;
+  ids.forEach((id, i) => { if (w[i] > 0) out[id] = fl[i]; });
+  return out;
+}
+
+function compute() {
+  const owe = {}, paid = {}, owePaid = {}, shares = {};
+  S.people.forEach(p => { owe[p.id] = 0; paid[p.id] = 0; owePaid[p.id] = 0; });
+  for (const b of S.bills) {
+    const s = split(b); shares[b.id] = s;
+    const hasPayer = b.payer && person(b.payer) && Object.keys(s).length;
+    for (const id in s) { owe[id] += s[id]; if (hasPayer) owePaid[id] += s[id]; }
+    if (hasPayer) paid[b.payer] += b.amount;
+  }
+  const bal = {}; S.people.forEach(p => bal[p.id] = paid[p.id] - owePaid[p.id]);
+  return { owe, paid, owePaid, bal, shares, transfers: settle(bal) };
+}
+
+function settle(bal) {
+  const d = [], c = [];
+  for (const id in bal) { if (bal[id] < 0) d.push([id, -bal[id]]); else if (bal[id] > 0) c.push([id, bal[id]]); }
+  d.sort((a, b) => b[1] - a[1]); c.sort((a, b) => b[1] - a[1]);
+  const t = []; let i = 0, j = 0;
+  while (i < d.length && j < c.length) {
+    const v = Math.min(d[i][1], c[j][1]);
+    t.push([d[i][0], c[j][0], v]);
+    d[i][1] -= v; c[j][1] -= v;
+    if (!d[i][1]) i++; if (!c[j][1]) j++;
+  }
+  return t;
+}
+
+/* ---------- render ---------- */
+function renderPeople() {
+  $('#people').innerHTML = S.people.map(p => `
+    <span class="chip" data-pid="${p.id}">
+      <input type="text" data-f="pname" value="${esc(p.name)}" aria-label="Nome">
+      <button data-act="del-person" title="Remover">×</button>
+    </span>`).join('') || '<span class="muted">Adicione os moradores da casa.</span>';
+}
+
+function renderBills() {
+  if (!S.bills.length) { $('#bills').innerHTML = '<p class="muted">Nenhuma conta ainda.</p>'; return; }
+  $('#bills').innerHTML = S.bills.map(b => `
+    <div class="bill" data-bill="${b.id}">
+      <div class="bill-top">
+        <input class="name" type="text" data-f="name" value="${esc(b.name)}" placeholder="Nome da conta">
+        <input type="text" inputmode="decimal" data-f="amount" value="${showMoney(b.amount)}" placeholder="R$ 0,00">
+        <select data-f="payer">
+          <option value="">Ainda não foi paga</option>
+          ${S.people.map(p => `<option value="${p.id}" ${b.payer === p.id ? 'selected' : ''}>Pago por ${esc(p.name)}</option>`).join('')}
+        </select>
+        <button class="ghost" data-act="del-bill">Remover</button>
+      </div>
+      <div class="parts">
+        ${S.people.map(p => {
+          const on = p.id in b.parts;
+          return `<span class="part ${on ? 'on' : ''}">
+            <label><input type="checkbox" data-act="toggle" data-pid="${p.id}" ${on ? 'checked' : ''}> ${esc(p.name)}</label>
+            ${on && b.mode === 'peso' ? `<input class="w" type="text" inputmode="decimal" data-f="weight" data-pid="${p.id}" value="${String(b.parts[p.id]).replace('.', ',')}" title="Peso">` : ''}
+            ${on ? `<span class="share" data-share="${b.id}:${p.id}"></span>` : ''}
+          </span>`;
+        }).join('')}
+        <select class="mode" data-f="mode">
+          <option value="igual" ${b.mode !== 'peso' ? 'selected' : ''}>Divisão igual</option>
+          <option value="peso" ${b.mode === 'peso' ? 'selected' : ''}>Por peso</option>
+        </select>
+      </div>
+    </div>`).join('');
+}
+
+function renderSummary() {
+  const R = compute();
+  document.querySelectorAll('[data-share]').forEach(el => {
+    const [bid, pid] = el.dataset.share.split(':');
+    el.textContent = fmt(R.shares[bid]?.[pid] || 0);
+  });
+
+  const P = S.people;
+  const total = S.bills.reduce((a, b) => a + b.amount, 0);
+  $('#matrix').innerHTML = !P.length ? '' : `
+    <thead><tr><th>Conta</th><th>Valor</th>${P.map(p => `<th>${esc(p.name)}</th>`).join('')}</tr></thead>
+    <tbody>${S.bills.map(b => `<tr><td>${esc(b.name) || '<span class="muted">sem nome</span>'}</td><td>${fmt(b.amount)}</td>${P.map(p => `<td>${R.shares[b.id][p.id] != null ? fmt(R.shares[b.id][p.id]) : '<span class="muted">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tfoot><tr><td>Total</td><td>${fmt(total)}</td>${P.map(p => `<td>${fmt(R.owe[p.id])}</td>`).join('')}</tr></tfoot>`;
+
+  $('#balances').innerHTML = !P.length ? '' : `
+    <thead><tr><th></th><th>Pagou</th><th>Parte</th><th>Saldo</th></tr></thead>
+    <tbody>${P.map(p => { const v = R.bal[p.id]; return `<tr><td>${esc(p.name)}</td><td>${fmt(R.paid[p.id])}</td><td>${fmt(R.owePaid[p.id])}</td><td class="${v < 0 ? 'neg' : v > 0 ? 'pos' : ''}">${v > 0 ? '+' : ''}${fmt(v)}</td></tr>`; }).join('')}</tbody>`;
+
+  $('#transfers').innerHTML = R.transfers.length
+    ? R.transfers.map(([f, t, v]) => `<li><span><b>${esc(person(f).name)}</b> → ${esc(person(t).name)}</span><b>${fmt(v)}</b></li>`).join('')
+    : '<li class="muted">Ninguém deve nada a ninguém.</li>';
+  save();
+}
+
+function renderAll() { $('#month').value = S.month || curMonth(); renderPeople(); renderBills(); renderSummary(); }
+
+/* ---------- eventos ---------- */
+$('#addPerson').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#personName').value.trim(); if (!name) return;
+  const id = uid(); S.people.push({ id, name });
+  $('#personName').value = ''; renderAll();
+});
+
+$('#people').addEventListener('input', e => {
+  const pid = e.target.closest('[data-pid]')?.dataset.pid;
+  if (e.target.dataset.f === 'pname') { person(pid).name = e.target.value; renderSummary(); }
+});
+$('#people').addEventListener('change', e => { if (e.target.dataset.f === 'pname') renderBills(), renderSummary(); });
+$('#people').addEventListener('click', e => {
+  if (e.target.dataset.act !== 'del-person') return;
+  const pid = e.target.closest('[data-pid]').dataset.pid;
+  S.people = S.people.filter(p => p.id !== pid);
+  S.bills.forEach(b => { delete b.parts[pid]; if (b.payer === pid) b.payer = ''; });
+  renderAll();
+});
+
+const billOf = el => S.bills.find(b => b.id === el.closest('[data-bill]')?.dataset.bill);
+$('#bills').addEventListener('input', e => {
+  const b = billOf(e.target); if (!b) return; const f = e.target.dataset.f;
+  if (f === 'name') b.name = e.target.value;
+  else if (f === 'amount') b.amount = parseMoney(e.target.value);
+  else if (f === 'weight') b.parts[e.target.dataset.pid] = parseNum(e.target.value);
+  else return;
+  renderSummary();
+});
+$('#bills').addEventListener('change', e => {
+  const b = billOf(e.target); if (!b) return; const f = e.target.dataset.f;
+  if (f === 'amount') { e.target.value = showMoney(b.amount); return; }
+  if (f === 'payer') { b.payer = e.target.value; renderSummary(); return; }
+  if (f === 'mode') { b.mode = e.target.value; renderBills(); renderSummary(); return; }
+  if (e.target.dataset.act === 'toggle') {
+    const pid = e.target.dataset.pid;
+    if (e.target.checked) b.parts[pid] = 1; else delete b.parts[pid];
+    renderBills(); renderSummary();
+  }
+});
+$('#bills').addEventListener('click', e => {
+  if (e.target.dataset.act !== 'del-bill') return;
+  const b = billOf(e.target); S.bills = S.bills.filter(x => x !== b); renderAll();
+});
+$('#addBill').addEventListener('click', () => {
+  const parts = {}; S.people.forEach(p => parts[p.id] = 1);
+  S.bills.push({ id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts });
+  renderAll();
+  const inputs = document.querySelectorAll('.bill:last-child [data-f=name]'); inputs[0]?.focus();
+});
+$('#month').addEventListener('change', e => { S.month = e.target.value; save(); });
+$('#reset').addEventListener('click', e => {
+  const btn = e.target;
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = '1'; btn.textContent = 'Clique de novo para apagar tudo';
+    setTimeout(() => { delete btn.dataset.armed; btn.textContent = 'Recomeçar do zero'; }, 3000);
+    return;
+  }
+  delete btn.dataset.armed; btn.textContent = 'Recomeçar do zero';
+  S = { month: curMonth(), people: [], bills: [] }; renderAll();
+});
+// Dentro de um iframe (pré-visualização) o link compartilhável não funciona.
+try { if (window.self !== window.top) $('#share').style.display = 'none'; } catch (e) { $('#share').style.display = 'none'; }
+
+/* ---------- compartilhar ---------- */
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2000); }
+async function copyText(txt) {
+  try { await navigator.clipboard.writeText(txt); return true; }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy'); ta.remove(); return ok;
+  }
+}
+function monthLabel() {
+  const [y, m] = (S.month || curMonth()).split('-').map(Number);
+  const s = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function summaryText() {
+  const R = compute(), L = [];
+  L.push(`*Contas – ${monthLabel()}*`, '');
+  S.bills.forEach(b => {
+    const who = Object.keys(R.shares[b.id]).map(id => person(id).name).join(', ');
+    L.push(`• ${b.name || 'Conta'}: ${fmt(b.amount)}${b.payer && person(b.payer) ? ` (pago por ${person(b.payer).name})` : ''} — ${who || 'ninguém'}`);
+  });
+  L.push('', '*Parte de cada um*');
+  S.people.forEach(p => L.push(`• ${p.name}: ${fmt(R.owe[p.id])}`));
+  if (R.transfers.length) {
+    L.push('', '*Acertos*');
+    R.transfers.forEach(([f, t, v]) => L.push(`• ${person(f).name} → ${person(t).name}: ${fmt(v)}`));
+  }
+  return L.join('\n');
+}
+$('#copy').addEventListener('click', async () => toast(await copyText(summaryText()) ? 'Resumo copiado – cole no WhatsApp' : 'Não foi possível copiar'));
+$('#share').addEventListener('click', async () => {
+  const url = location.origin + location.pathname + '#d=' + encode(S);
+  toast(await copyText(url) ? 'Link copiado – quem abrir vê estas contas' : 'Não foi possível copiar');
+});
+
+renderAll();
+</script>
+</body>
+</html>
