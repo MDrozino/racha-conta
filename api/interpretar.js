@@ -229,8 +229,8 @@ async function handler(req, res) {
       if (!e.status) console.error(`[interpretar] erro com ${modelo}: ${e.name} ${e.message}`);
       codigo = e.status ? String(e.status) : (e.name === 'SyntaxError' ? 'json' : (e.name === 'TimeoutError' ? 'tempo' : 'rede'));
       if (e.status === 429) cota = true;
-      // 404/403/429: tenta o próximo modelo da lista; JSON inválido também.
-      if (e.status && ![403, 404, 429].includes(e.status)) break;
+      // Modelo indisponível, cota ou Gemini sobrecarregado (500/503): tenta o próximo.
+      if (e.status && ![403, 404, 429, 500, 503].includes(e.status)) break;
     }
   }
   // "codigo" só diz o tipo de falha (ex.: 400, 404, json), nada da resposta da IA.

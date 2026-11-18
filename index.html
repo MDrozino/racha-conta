@@ -118,6 +118,7 @@ tfoot td{font-weight:600;border-bottom:0}
       <textarea id="fala" maxlength="1000" placeholder="Ex.: Estamos eu, João e Maria. A Maria tomou 3 cervejas de 12, a porção de 40 foi minha e do João, a pizza de 80 foi de todo mundo. O João pagou tudo, mais 10%."></textarea>
       <div class="row"><span class="muted" id="falaCount">0/1000</span><button class="primary" id="enviarTexto">Preencher</button></div>
     </details>
+    <button class="primary" id="reenviar" hidden>Reenviar último áudio</button>
     <button class="reset" id="reset">Apagar todos os dados</button>
   </section>
 
@@ -400,6 +401,7 @@ $('#reset').addEventListener('click', e => {
 });
 
 /* ---------- IA: interpretar a fala e preencher ---------- */
+const LEAD = 'Toque no microfone e conte:';
 const ERROS = {
   cota: 'Limite de uso da IA atingido por hoje. Preencha manualmente.',
   limite_local: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
@@ -447,7 +449,7 @@ function aplicarIA(d) {
 
 async function comCarregando(btns, fn) {
   btns.forEach(b => b.classList.add('busy'));
-  try { await fn(); } catch (e) { toast(e.message); }
+  try { await fn(); return true; } catch (e) { toast(e.message); return false; }
   finally { btns.forEach(b => b.classList.remove('busy')); }
 }
 
@@ -459,13 +461,27 @@ $('#enviarTexto').addEventListener('click', () => {
     toast('Interpretando…');
     aplicarIA(await interpretar({ texto }));
     $('#fala').value = ''; $('#falaCount').textContent = '0/1000';
+    $('#micLead').textContent = LEAD;
   });
 });
 
 /* ---------- microfone: grava até 60 s e manda o áudio para a IA ---------- */
 const MIC_MAX = 60;
-const LEAD = 'Toque no microfone e conte:';
-let rec = null;
+let rec = null, ultimoAudio = null;
+async function enviarAudio(blob) {
+  $('#micLead').textContent = 'Interpretando…';
+  $('#reenviar').hidden = true;
+  const ok = await comCarregando([$('#mic'), $('#enviarTexto'), $('#reenviar')], async () => {
+    let wav;
+    try { wav = await paraWav(blob); } catch (e) { throw new Error('Não consegui processar o áudio neste navegador. Use “Prefere digitar?”.'); }
+    if (wav.size > 3 * 1024 * 1024) throw new Error('Áudio longo demais. Fale por no máximo 1 minuto.');
+    aplicarIA(await interpretar({ audio: await paraBase64(wav), mime: 'audio/wav' }));
+  });
+  $('#micLead').textContent = LEAD;
+  $('#reenviar').hidden = ok;            // falhou: dá para reenviar sem falar de novo
+  if (ok) ultimoAudio = null;
+}
+$('#reenviar').addEventListener('click', () => { if (ultimoAudio) enviarAudio(ultimoAudio); });
 function tipoAudio() {
   const tipos = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
   return (window.MediaRecorder && MediaRecorder.isTypeSupported) ? (tipos.find(t => MediaRecorder.isTypeSupported(t)) || '') : '';
@@ -511,13 +527,8 @@ async function iniciarGravacao() {
     $('#mic').classList.remove('rec');
     const blob = new Blob(pedacos, { type: (mr.mimeType || mime || 'audio/webm') });
     if (Date.now() - inicio < 1000 || !blob.size) { $('#micLead').textContent = LEAD; toast('Gravação muito curta.'); return; }
-    $('#micLead').textContent = 'Interpretando…';
-    comCarregando([$('#mic'), $('#enviarTexto')], async () => {
-      let wav;
-      try { wav = await paraWav(blob); } catch (e) { throw new Error('Não consegui processar o áudio neste navegador. Use “Prefere digitar?”.'); }
-      if (wav.size > 3 * 1024 * 1024) throw new Error('Áudio longo demais. Fale por no máximo 1 minuto.');
-      aplicarIA(await interpretar({ audio: await paraBase64(wav), mime: 'audio/wav' }));
-    }).finally(() => { $('#micLead').textContent = LEAD; });
+    ultimoAudio = blob;
+    enviarAudio(blob);
   };
   mr.start();
   $('#mic').classList.add('rec');
@@ -528,8 +539,67 @@ async function iniciarGravacao() {
   };
   tick(); rec.timer = setInterval(tick, 250);
 }
+/* ---------- ditado do navegador: fala vira texto no campo, e o envio é por "Preencher" ---------- */
+const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let dit = null;
+function mostrarTexto(t) {
+  const el = $('#fala');
+  el.value = t.slice(0, 1000);
+  $('#falaCount').textContent = `${el.value.length}/1000`;
+  el.scrollTop = el.scrollHeight;
+}
+function iniciarDitado() {
+  $('.typed').open = true;
+  const base = $('#fala').value.trim();
+  dit = { ativo: true, base: base ? base + ' ' : '', sessao: '', inicio: Date.now(), timer: null, r: null };
+  const nova = () => {
+    const r = new Reconhecedor();
+    r.lang = 'pt-BR'; r.continuous = false; r.interimResults = true; r.maxAlternatives = 1;
+    r.onresult = e => {
+      let final = '', parcial = '';
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript; else parcial += e.results[i][0].transcript;
+      }
+      dit.sessao = final;
+      mostrarTexto(dit.base + final + parcial);
+    };
+    r.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { toast('Permita o uso do microfone nas configurações do navegador.'); pararDitado(); }
+    };
+    r.onend = () => {
+      if (dit.sessao) { dit.base += dit.sessao.trim() + ' '; dit.sessao = ''; }
+      mostrarTexto(dit.base);
+      if (dit.ativo) { try { nova().start(); } catch (e) { pararDitado(); } } else terminarDitado();
+    };
+    dit.r = r; return r;
+  };
+  try { nova().start(); } catch (e) { dit = null; toast('Não consegui usar o ditado. Use “Prefere digitar?”.'); return; }
+  $('#mic').classList.add('rec');
+  const tick = () => {
+    const s = Math.floor((Date.now() - dit.inicio) / 1000);
+    $('#micLead').textContent = `Ouvindo… ${s}s — toque de novo para terminar`;
+    if (s >= 180) pararDitado();
+  };
+  tick(); dit.timer = setInterval(tick, 250);
+}
+function pararDitado() {
+  if (!dit) return;
+  dit.ativo = false;
+  try { dit.r.stop(); } catch (e) { terminarDitado(); }
+}
+function terminarDitado() {
+  if (!dit) return;
+  clearInterval(dit.timer); dit = null;
+  $('#mic').classList.remove('rec');
+  const temTexto = !!$('#fala').value.trim();
+  $('#micLead').textContent = temTexto ? 'Confira o texto abaixo e toque em “Preencher”.' : LEAD;
+  if (temTexto) $('#enviarTexto').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  else toast('Não ouvi nada. Tente de novo.');
+}
+
 $('#mic').addEventListener('click', () => {
-  if (rec) rec.mr.stop(); else iniciarGravacao();
+  if (Reconhecedor) { if (dit) pararDitado(); else iniciarDitado(); return; }
+  if (rec) rec.mr.stop(); else iniciarGravacao();     // navegador sem ditado: envia o áudio
 });
 
 /* ---------- compartilhar ---------- */
