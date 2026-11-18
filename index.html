@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Racha Conta</title>
 <style>
-:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2328;--muted:#6b7078;--line:#e6e2d9;--accent:#2f6f5e;--accent-soft:#e3efe9;--warn:#b4532a;--radius:14px}
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2328;--muted:#6b7078;--line:#e6e2d9;--accent:#2f6f5e;--accent-soft:#e3efe9;--warn:#b4532a;--hl:#d9a400;--hl-soft:#fff8e1;--radius:14px}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:900px;margin:0 auto;padding:24px 16px 64px}
@@ -16,7 +16,7 @@ h1 span{color:var(--accent)}
 section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 12px;font-weight:600}
 input,select,button{font:inherit;color:inherit}
-input[type=text],input[type=month],input[type=number],select{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:0;width:100%}
+input[type=text],select{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:0;width:100%}
 input:focus,select:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
 button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
 button:hover{border-color:var(--accent)}
@@ -25,22 +25,43 @@ button.ghost{border-color:transparent;background:transparent;color:var(--muted);
 button.ghost:hover{color:var(--warn)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row input[type=text]{width:auto;flex:1;min-width:160px}
+
+/* microfone */
+.voice{text-align:center;padding:28px 18px 22px}
+.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(47,111,94,.35);transition:transform .15s}
+.mic:hover{transform:scale(1.05)}
+.mic svg{width:42px;height:42px}
+.mic.rec{background:#c0392b;box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 18px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.voice .lead{font-weight:600;margin:14px 0 10px}
+.tips{list-style:none;padding:0;margin:0 auto 16px;max-width:560px;text-align:left;display:grid;gap:6px}
+.tips li{background:var(--bg);border-radius:10px;padding:8px 12px}
+.tips li b{display:block;font-size:14px}
+.tips li span{color:var(--muted);font-size:13px}
+.reset{color:var(--warn);border-color:#f0d6cb}
+.reset.armed{background:var(--warn);color:#fff;border-color:var(--warn)}
+
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .chip{display:inline-flex;align-items:center;background:var(--accent-soft);border-radius:999px;padding:2px 2px 2px 4px}
 .chip input{border:0!important;background:transparent!important;width:9ch!important;padding:4px 8px!important}
 .chip button{border:0;background:transparent;padding:2px 10px;color:var(--muted)}
 .chip button:hover{color:var(--warn)}
 .bill{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.bill.warn{border-color:var(--hl);background:var(--hl-soft)}
+.bill .flag{display:none;font-size:12px;font-weight:600;color:#8a6a00;margin-bottom:8px}
+.bill.warn .flag{display:block}
 .bill-top{display:grid;grid-template-columns:1fr 140px 190px auto;gap:8px}
 @media(max-width:640px){.bill-top{grid-template-columns:1fr 1fr}.bill-top .name{grid-column:1/-1}}
 .parts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
-.part{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.part{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:#fff}
 .part.on{background:var(--accent-soft);border-color:var(--accent)}
 .part label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;user-select:none}
 .part input[type=checkbox]{accent-color:var(--accent);margin:0}
-.part .w{width:60px!important;padding:2px 6px!important;border-radius:8px}
+.part .w{width:56px!important;padding:2px 6px!important;border-radius:8px}
 .part .share{color:var(--muted);font-size:13px}
 .mode{margin-left:auto;width:auto!important;font-size:13px}
+.service{display:flex;align-items:center;gap:8px;margin:4px 0 14px}
+.service input{width:80px!important}
 .tablewrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -52,7 +73,7 @@ tfoot td{font-weight:600;border-bottom:0}
 .transfers li{padding:10px 12px;background:var(--bg);border-radius:10px;margin:6px 0;display:flex;justify-content:space-between;gap:12px}
 .muted{color:var(--muted)}
 .hint{font-size:13px;color:var(--muted);margin:8px 0 0}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:700px){.grid2{grid-template-columns:1fr}}
@@ -63,17 +84,31 @@ tfoot td{font-weight:600;border-bottom:0}
   <header>
     <div>
       <h1>Racha<span>Conta</span></h1>
-      <p class="sub">Divida as contas da casa, cada uma só entre quem participa.</p>
+      <p class="sub">Divida as contas da casa, bar, ou qualquer coisa, cada uma só entre quem participa.</p>
     </div>
     <div class="row">
-      <input type="month" id="month" style="width:auto">
       <button id="share">Copiar link</button>
       <button id="copy" class="primary">Copiar resumo</button>
     </div>
   </header>
 
+  <section class="voice">
+    <button class="mic" id="mic" aria-label="Falar as contas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+    </button>
+    <p class="lead">Toque no microfone e conte:</p>
+    <ul class="tips">
+      <li><b>Quem está dividindo?</b><span>“Estamos eu, João, Maria e Pedro.”</span></li>
+      <li><b>O que foi consumido e quanto custou?</b><span>“3 cervejas de 12 reais, uma porção de 40, aluguel de 3 mil.”</span></li>
+      <li><b>Quem consumiu cada coisa?</b><span>“A porção foi minha e do João, a pizza foi de todo mundo.”</span></li>
+      <li><b>Quem pagou?</b><span>“O João pagou tudo.”</span></li>
+      <li><b>Tem taxa de serviço?</b><span>“Mais 10% do garçom.”</span></li>
+    </ul>
+    <button class="reset" id="reset">Apagar todos os dados</button>
+  </section>
+
   <section>
-    <h2>Moradores</h2>
+    <h2>Quem divide a conta</h2>
     <form class="row" id="addPerson">
       <input type="text" id="personName" placeholder="Nome (ex.: João)" autocomplete="off">
       <button type="submit">Adicionar</button>
@@ -82,15 +117,21 @@ tfoot td{font-weight:600;border-bottom:0}
   </section>
 
   <section>
-    <h2>Contas do mês</h2>
+    <h2>Contas a pagar</h2>
+    <div class="service">
+      <label for="service">Taxa de serviço</label>
+      <input type="text" inputmode="decimal" id="service" placeholder="0">
+      <span class="muted">%</span>
+    </div>
     <div id="bills"></div>
     <button id="addBill">+ Nova conta</button>
-    <p class="hint">“Por peso”: use pesos diferentes quando alguém paga mais (ex.: quarto maior = 1,5; normal = 1). “Pago por” serve para calcular quem deve devolver quanto para quem.</p>
+    <p class="hint">No valor dá para digitar “3x12” (3 itens de R$ 12). “Por quantidade”: cada um paga proporcional ao que consumiu (ex.: Maria 3, João 1). “Pago por” serve para calcular quem devolve quanto para quem.</p>
   </section>
 
   <section>
     <h2>Quanto cada um paga</h2>
     <div class="tablewrap"><table id="matrix"></table></div>
+    <p class="hint" id="serviceNote"></p>
   </section>
 
   <section class="grid2">
@@ -104,12 +145,11 @@ tfoot td{font-weight:600;border-bottom:0}
     </div>
   </section>
 
-  <p class="hint" style="text-align:center">Os dados ficam salvos neste navegador. Use “Copiar link” para mandar tudo para os outros moradores. · <button class="ghost" id="reset">Recomeçar do zero</button></p>
+  <p class="hint" style="text-align:center">Os dados não ficam salvos: ao abrir a página, tudo começa do zero. Use “Copiar link” para mandar as contas para os outros.</p>
 </main>
 <div class="toast" id="toast"></div>
 
 <script>
-const KEY = 'racha-conta-v1';
 const uid = () => Math.random().toString(36).slice(2, 9);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -117,47 +157,55 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const fmt = c => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const showMoney = c => c ? (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
 function parseMoney(s) {
-  s = String(s).replace(/[^\d,.]/g, '');
+  s = String(s).trim();
+  const m = s.match(/^(\d+)\s*[x×*]\s*(.+)$/i);           // "3x12" = 3 itens de 12
+  if (m) return parseInt(m[1], 10) * parseMoney(m[2]);
+  s = s.replace(/[^\d,.]/g, '');
   if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
   else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
   const v = parseFloat(s);
   return isFinite(v) ? Math.round(v * 100) : 0;
 }
 const parseNum = s => { const v = parseFloat(String(s).replace(',', '.')); return isFinite(v) && v > 0 ? v : 0; };
-const curMonth = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const showNum = n => n ? String(n).replace('.', ',') : '';
 
-function emptyBill() { return { id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts: {} }; }
-function defaults() { return { month: curMonth(), people: [], bills: [emptyBill()] }; }
+function emptyBill() { return { id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts: {}, uncertain: false }; }
+function defaults() { return { people: [], bills: [emptyBill()], service: 0 }; }
 
 function encode(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function decode(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
 
+// Sempre começa do zero; só carrega dados se vierem num link compartilhado.
 function load() {
   if (location.hash.startsWith('#d=')) {
     try {
       const d = decode(location.hash.slice(3));
       history.replaceState(null, '', location.pathname + location.search);
-      if (d && Array.isArray(d.people) && Array.isArray(d.bills)) { setTimeout(() => toast('Dados do link carregados'), 300); return d; }
+      if (d && Array.isArray(d.people) && Array.isArray(d.bills)) {
+        d.service = +d.service || 0;
+        setTimeout(() => toast('Contas do link carregadas'), 300);
+        return d;
+      }
     } catch (e) {}
   }
-  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.people) return d; } catch (e) {}
   return defaults();
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 let S = load();
 const person = id => S.people.find(p => p.id === id);
+const withService = b => Math.round(b.amount * (100 + (S.service || 0)) / 100);
 
 // Divide em centavos sem perder nenhum (maior resto).
 function split(b) {
+  const total = withService(b);
   const ids = Object.keys(b.parts).filter(person);
   const w = ids.map(id => b.mode === 'peso' ? parseNum(b.parts[id]) : 1);
   const sw = w.reduce((a, x) => a + x, 0);
   const out = {};
-  if (!sw || !b.amount) return out;
-  const raw = w.map(x => b.amount * x / sw);
+  if (!sw || !total) return out;
+  const raw = w.map(x => total * x / sw);
   const fl = raw.map(Math.floor);
-  const rem = b.amount - fl.reduce((a, x) => a + x, 0);
+  const rem = total - fl.reduce((a, x) => a + x, 0);
   const order = raw.map((r, i) => [r - fl[i], i]).sort((x, y) => y[0] - x[0]);
   for (let k = 0; k < rem; k++) fl[order[k % order.length][1]]++;
   ids.forEach((id, i) => { if (w[i] > 0) out[id] = fl[i]; });
@@ -171,7 +219,7 @@ function compute() {
     const s = split(b); shares[b.id] = s;
     const hasPayer = b.payer && person(b.payer) && Object.keys(s).length;
     for (const id in s) { owe[id] += s[id]; if (hasPayer) owePaid[id] += s[id]; }
-    if (hasPayer) paid[b.payer] += b.amount;
+    if (hasPayer) paid[b.payer] += withService(b);
   }
   const bal = {}; S.people.forEach(p => bal[p.id] = paid[p.id] - owePaid[p.id]);
   return { owe, paid, owePaid, bal, shares, transfers: settle(bal) };
@@ -197,15 +245,16 @@ function renderPeople() {
     <span class="chip" data-pid="${p.id}">
       <input type="text" data-f="pname" value="${esc(p.name)}" placeholder="Nome" aria-label="Nome">
       <button data-act="del-person" title="Remover">×</button>
-    </span>`).join('') || '<span class="muted">Adicione os moradores da casa.</span>';
+    </span>`).join('') || '<span class="muted">Adicione quem racha a conta.</span>';
 }
 
 function renderBills() {
   if (!S.bills.length) { $('#bills').innerHTML = '<p class="muted">Nenhuma conta ainda.</p>'; return; }
   $('#bills').innerHTML = S.bills.map(b => `
-    <div class="bill" data-bill="${b.id}">
+    <div class="bill ${b.uncertain ? 'warn' : ''}" data-bill="${b.id}">
+      <div class="flag">Confira esta conta: a IA não teve certeza.</div>
       <div class="bill-top">
-        <input class="name" type="text" data-f="name" value="${esc(b.name)}" placeholder="Nome da conta (ex.: Aluguel)">
+        <input class="name" type="text" data-f="name" value="${esc(b.name)}" placeholder="Nome da conta (ex.: Aluguel, Cerveja)">
         <input type="text" inputmode="decimal" data-f="amount" value="${showMoney(b.amount)}" placeholder="R$ 0,00">
         <select data-f="payer">
           <option value="">Ainda não foi paga</option>
@@ -214,19 +263,19 @@ function renderBills() {
         <button class="ghost" data-act="del-bill">Remover</button>
       </div>
       <div class="parts">
-        ${S.people.length ? '' : '<span class="muted">Adicione os moradores acima para escolher quem divide esta conta.</span>'}
+        ${S.people.length ? '' : '<span class="muted">Adicione os rachadores acima para escolher quem divide esta conta.</span>'}
         ${S.people.map(p => {
           const on = p.id in b.parts;
           return `<span class="part ${on ? 'on' : ''}">
             <label><input type="checkbox" data-act="toggle" data-pid="${p.id}" ${on ? 'checked' : ''}> ${esc(p.name)}</label>
-            ${on && b.mode === 'peso' ? `<input class="w" type="text" inputmode="decimal" data-f="weight" data-pid="${p.id}" value="${String(b.parts[p.id]).replace('.', ',')}" title="Peso">` : ''}
+            ${on && b.mode === 'peso' ? `<input class="w" type="text" inputmode="decimal" data-f="weight" data-pid="${p.id}" value="${showNum(b.parts[p.id])}" title="Quantidade ou peso">` : ''}
             ${on ? `<span class="share" data-share="${b.id}:${p.id}"></span>` : ''}
           </span>`;
         }).join('')}
-        <select class="mode" data-f="mode">
+        ${S.people.length ? `<select class="mode" data-f="mode">
           <option value="igual" ${b.mode !== 'peso' ? 'selected' : ''}>Divisão igual</option>
-          <option value="peso" ${b.mode === 'peso' ? 'selected' : ''}>Por peso</option>
-        </select>
+          <option value="peso" ${b.mode === 'peso' ? 'selected' : ''}>Por quantidade</option>
+        </select>` : ''}
       </div>
     </div>`).join('');
 }
@@ -239,11 +288,12 @@ function renderSummary() {
   });
 
   const P = S.people;
-  const total = S.bills.reduce((a, b) => a + b.amount, 0);
+  const total = S.bills.reduce((a, b) => a + withService(b), 0);
   $('#matrix').innerHTML = !P.length ? '' : `
     <thead><tr><th>Conta</th><th>Valor</th>${P.map(p => `<th>${esc(p.name)}</th>`).join('')}</tr></thead>
-    <tbody>${S.bills.map(b => `<tr><td>${esc(b.name) || '<span class="muted">sem nome</span>'}</td><td>${fmt(b.amount)}</td>${P.map(p => `<td>${R.shares[b.id][p.id] != null ? fmt(R.shares[b.id][p.id]) : '<span class="muted">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tbody>${S.bills.map(b => `<tr><td>${esc(b.name) || '<span class="muted">sem nome</span>'}</td><td>${fmt(withService(b))}</td>${P.map(p => `<td>${R.shares[b.id][p.id] != null ? fmt(R.shares[b.id][p.id]) : '<span class="muted">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody>
     <tfoot><tr><td>Total</td><td>${fmt(total)}</td>${P.map(p => `<td>${fmt(R.owe[p.id])}</td>`).join('')}</tr></tfoot>`;
+  $('#serviceNote').textContent = S.service ? `Valores já incluem ${showNum(S.service)}% de taxa de serviço, proporcional ao consumo de cada um.` : '';
 
   $('#balances').innerHTML = !P.length ? '' : `
     <thead><tr><th></th><th>Pagou</th><th>Parte</th><th>Saldo</th></tr></thead>
@@ -252,17 +302,23 @@ function renderSummary() {
   $('#transfers').innerHTML = R.transfers.length
     ? R.transfers.map(([f, t, v]) => `<li><span><b>${esc(person(f).name)}</b> → ${esc(person(t).name)}</span><b>${fmt(v)}</b></li>`).join('')
     : '<li class="muted">Ninguém deve nada a ninguém.</li>';
-  save();
 }
 
-function renderAll() { $('#month').value = S.month || curMonth(); renderPeople(); renderBills(); renderSummary(); }
+function renderAll() {
+  $('#service').value = showNum(S.service);
+  renderPeople(); renderBills(); renderSummary();
+}
 
 /* ---------- eventos ---------- */
 $('#addPerson').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('#personName').value.trim(); if (!name) return;
   const id = uid(); S.people.push({ id, name });
-  S.bills.forEach(b => { if (!Object.keys(b.parts).some(person) || Object.keys(b.parts).length === S.people.length - 1 && !b.amount) b.parts[id] = 1; });
+  // Conta ainda sem ninguém (ou vazia com todos marcados) recebe a pessoa nova.
+  S.bills.forEach(b => {
+    const n = Object.keys(b.parts).filter(person).length;
+    if (!n || (n === S.people.length - 1 && !b.amount)) b.parts[id] = 1;
+  });
   $('#personName').value = ''; renderAll();
 });
 
@@ -270,7 +326,7 @@ $('#people').addEventListener('input', e => {
   const pid = e.target.closest('[data-pid]')?.dataset.pid;
   if (e.target.dataset.f === 'pname') { person(pid).name = e.target.value; renderSummary(); }
 });
-$('#people').addEventListener('change', e => { if (e.target.dataset.f === 'pname') renderBills(), renderSummary(); });
+$('#people').addEventListener('change', e => { if (e.target.dataset.f === 'pname') { renderBills(); renderSummary(); } });
 $('#people').addEventListener('click', e => {
   if (e.target.dataset.act !== 'del-person') return;
   const pid = e.target.closest('[data-pid]').dataset.pid;
@@ -279,18 +335,23 @@ $('#people').addEventListener('click', e => {
   renderAll();
 });
 
+$('#service').addEventListener('input', e => { S.service = Math.min(parseNum(e.target.value), 100); renderSummary(); });
+
 const billOf = el => S.bills.find(b => b.id === el.closest('[data-bill]')?.dataset.bill);
+function clearWarn(b, el) { if (b.uncertain) { b.uncertain = false; el.closest('.bill').classList.remove('warn'); } }
 $('#bills').addEventListener('input', e => {
   const b = billOf(e.target); if (!b) return; const f = e.target.dataset.f;
   if (f === 'name') b.name = e.target.value;
   else if (f === 'amount') b.amount = parseMoney(e.target.value);
   else if (f === 'weight') b.parts[e.target.dataset.pid] = parseNum(e.target.value);
   else return;
+  clearWarn(b, e.target);
   renderSummary();
 });
 $('#bills').addEventListener('change', e => {
   const b = billOf(e.target); if (!b) return; const f = e.target.dataset.f;
   if (f === 'amount') { e.target.value = showMoney(b.amount); return; }
+  clearWarn(b, e.target);
   if (f === 'payer') { b.payer = e.target.value; renderSummary(); return; }
   if (f === 'mode') { b.mode = e.target.value; renderBills(); renderSummary(); return; }
   if (e.target.dataset.act === 'toggle') {
@@ -305,26 +366,30 @@ $('#bills').addEventListener('click', e => {
 });
 $('#addBill').addEventListener('click', () => {
   const parts = {}; S.people.forEach(p => parts[p.id] = 1);
-  S.bills.push({ id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts });
+  S.bills.push({ ...emptyBill(), parts });
   renderAll();
-  const inputs = document.querySelectorAll('.bill:last-child [data-f=name]'); inputs[0]?.focus();
+  document.querySelector('.bill:last-child [data-f=name]')?.focus();
 });
-$('#month').addEventListener('change', e => { S.month = e.target.value; save(); });
+
+// Apagar tudo: pede um segundo clique para confirmar.
 $('#reset').addEventListener('click', e => {
-  const btn = e.target;
-  if (!btn.dataset.armed) {
-    btn.dataset.armed = '1'; btn.textContent = 'Clique de novo para apagar tudo';
-    setTimeout(() => { delete btn.dataset.armed; btn.textContent = 'Recomeçar do zero'; }, 3000);
+  const btn = e.currentTarget;
+  if (!btn.classList.contains('armed')) {
+    btn.classList.add('armed'); btn.textContent = 'Toque de novo para apagar tudo';
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Apagar todos os dados'; }, 3000);
     return;
   }
-  delete btn.dataset.armed; btn.textContent = 'Recomeçar do zero';
-  S = defaults(); renderAll();
+  clearTimeout(btn._t);
+  btn.classList.remove('armed'); btn.textContent = 'Apagar todos os dados';
+  S = defaults(); renderAll(); toast('Tudo apagado');
 });
-// Dentro de um iframe (pré-visualização) o link compartilhável não funciona.
-try { if (window.self !== window.top) $('#share').style.display = 'none'; } catch (e) { $('#share').style.display = 'none'; }
+
+// Microfone: a gravação entra na próxima etapa.
+$('#mic').addEventListener('click', () => toast('A entrada por voz está chegando. Por enquanto, preencha abaixo.'));
 
 /* ---------- compartilhar ---------- */
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2000); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2500); }
 async function copyText(txt) {
   try { await navigator.clipboard.writeText(txt); return true; }
   catch (e) {
@@ -332,18 +397,14 @@ async function copyText(txt) {
     const ok = document.execCommand('copy'); ta.remove(); return ok;
   }
 }
-function monthLabel() {
-  const [y, m] = (S.month || curMonth()).split('-').map(Number);
-  const s = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 function summaryText() {
   const R = compute(), L = [];
-  L.push(`*Contas – ${monthLabel()}*`, '');
+  L.push(`*Racha Conta – ${new Date().toLocaleDateString('pt-BR')}*`, '');
   S.bills.forEach(b => {
     const who = Object.keys(R.shares[b.id]).map(id => person(id).name).join(', ');
-    L.push(`• ${b.name || 'Conta'}: ${fmt(b.amount)}${b.payer && person(b.payer) ? ` (pago por ${person(b.payer).name})` : ''} — ${who || 'ninguém'}`);
+    L.push(`• ${b.name || 'Conta'}: ${fmt(withService(b))}${b.payer && person(b.payer) ? ` (pago por ${person(b.payer).name})` : ''} — ${who || 'ninguém'}`);
   });
+  if (S.service) L.push(`(inclui ${showNum(S.service)}% de taxa de serviço)`);
   L.push('', '*Parte de cada um*');
   S.people.forEach(p => L.push(`• ${p.name}: ${fmt(R.owe[p.id])}`));
   if (R.transfers.length) {
@@ -357,6 +418,7 @@ $('#share').addEventListener('click', async () => {
   const url = location.origin + location.pathname + '#d=' + encode(S);
   toast(await copyText(url) ? 'Link copiado – quem abrir vê estas contas' : 'Não foi possível copiar');
 });
+try { if (window.self !== window.top) $('#share').style.display = 'none'; } catch (e) { $('#share').style.display = 'none'; }
 
 renderAll();
 </script>
