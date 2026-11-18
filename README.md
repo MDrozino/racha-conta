@@ -5,7 +5,7 @@
 **Divida as contas da casa, do bar ou de qualquer rolê, cada uma só entre quem participa.**
 Fale ou digite as contas, e o formulário se preenche sozinho.
 
-[![Acessar o site](https://img.shields.io/badge/Acessar-rachaconta--ten.vercel.app-2f6f5e?style=for-the-badge)](https://rachaconta-ten.vercel.app)
+[![Acessar o site](https://img.shields.io/badge/Acessar-racha--conta--67.vercel.app-2f6f5e?style=for-the-badge)](https://racha-conta-67.vercel.app)
 
 ![HTML](https://img.shields.io/badge/HTML%2FJS-puro-e34f26?style=flat-square)
 ![Vercel](https://img.shields.io/badge/Deploy-Vercel-000?style=flat-square&logo=vercel)
@@ -31,7 +31,7 @@ Quem mora com outras pessoas conhece o fim do mês: aluguel, condomínio, intern
 | 🍽️ **Taxa de serviço** | Os 10% do garçom são divididos proporcionalmente ao consumo de cada um. |
 | 🔁 **Acertos automáticos** | Informe quem pagou cada conta e veja o **mínimo de transferências** para todo mundo ficar quite. |
 | 📲 **Compartilhar** | **Copiar resumo** gera um texto pronto para o WhatsApp; **Copiar link** manda as contas preenchidas para os outros. |
-| 🏠 **Modo casa** | Em [`/?casa`](https://rachaconta-ten.vercel.app/?casa), salve um **modelo da sua casa** no próprio celular. Ele já abre preenchido todo mês. |
+| 🏠 **Modo casa** | Em [`/?casa`](https://racha-conta-67.vercel.app/?casa), salve um **modelo da sua casa** no próprio celular. Ele já abre preenchido todo mês. |
 | 🔒 **Privacidade** | O site normal não guarda nada: ao abrir, começa do zero. O modelo da casa fica só no navegador do seu aparelho. |
 
 ## 🗣️ Exemplo
