@@ -48,6 +48,11 @@ button.del:hover{background:#c0392b;color:#fff;border-color:#c0392b}
 .typed textarea:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
 .typed .row{justify-content:space-between;margin-top:8px}
 .busy{opacity:.6;pointer-events:none}
+.casa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px}
+[hidden]{display:none!important}
+.casa b{color:var(--accent)}
+.casa .acoes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.casa .del.armed{background:#c0392b;color:#fff}
 .reset.armed{background:var(--warn);color:#fff;border-color:var(--warn)}
 
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -100,6 +105,14 @@ tfoot td{font-weight:600;border-bottom:0}
       <button id="copy" class="primary">Copiar resumo</button>
     </div>
   </header>
+
+  <div class="casa" id="casaBar" hidden>
+    <span>🏠 <b>Modo casa</b> · <span id="modeloInfo"></span></span>
+    <span class="acoes">
+      <button class="primary" id="salvarModelo">Salvar como modelo</button>
+      <button class="del" id="excluirModelo" hidden>Excluir modelo</button>
+    </span>
+  </div>
 
   <section class="voice">
     <button class="mic" id="mic" aria-label="Falar as contas">
@@ -203,7 +216,22 @@ function load() {
       }
     } catch (e) {}
   }
+  if (CASA) { const m = lerModelo(); if (m) return m; }
   return defaults();
+}
+
+/* ---------- modo casa (?casa): modelo da casa salvo só neste aparelho ---------- */
+const CASA = new URLSearchParams(location.search).has('casa');
+const KEY_MODELO = 'racha-conta-modelo-v1';
+function lerModelo() {
+  try {
+    const m = JSON.parse(localStorage.getItem(KEY_MODELO));
+    if (m && Array.isArray(m.dados?.people) && Array.isArray(m.dados?.bills)) { m.dados.service = +m.dados.service || 0; return m.dados; }
+  } catch (e) {}
+  return null;
+}
+function dataModelo() {
+  try { const m = JSON.parse(localStorage.getItem(KEY_MODELO)); return m && m.salvoEm ? new Date(m.salvoEm) : null; } catch (e) { return null; }
 }
 
 let S = load();
@@ -319,7 +347,16 @@ function renderSummary() {
     : '<li class="muted">Ninguém deve nada a ninguém.</li>';
 }
 
+function renderCasa() {
+  if (!CASA) return;
+  $('#casaBar').hidden = false;
+  const d = dataModelo();
+  $('#modeloInfo').textContent = d ? `modelo salvo neste aparelho em ${d.toLocaleDateString('pt-BR')}` : 'nenhum modelo salvo ainda';
+  $('#excluirModelo').hidden = !d;
+  $('#reset').textContent = d ? 'Voltar ao modelo da casa' : 'Apagar todos os dados';
+}
 function renderAll() {
+  renderCasa();
   $('#service').value = showNum(S.service);
   renderPeople(); renderBills(); renderSummary();
 }
@@ -392,12 +429,13 @@ $('#reset').addEventListener('click', e => {
   if (!btn.classList.contains('armed')) {
     btn.classList.add('armed'); btn.textContent = 'Toque de novo para apagar tudo';
     clearTimeout(btn._t);
-    btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Apagar todos os dados'; }, 3000);
+    btn._t = setTimeout(() => { btn.classList.remove('armed'); renderCasa(); if (!CASA) btn.textContent = 'Apagar todos os dados'; }, 3000);
     return;
   }
   clearTimeout(btn._t);
-  btn.classList.remove('armed'); btn.textContent = 'Apagar todos os dados';
-  S = defaults(); renderAll(); toast('Tudo apagado');
+  btn.classList.remove('armed');
+  const m = CASA ? lerModelo() : null;
+  S = m || defaults(); renderAll(); toast(m ? 'Modelo da casa recarregado' : 'Tudo apagado');
 });
 
 /* ---------- IA: interpretar a fala e preencher ---------- */
@@ -631,6 +669,24 @@ $('#copy').addEventListener('click', async () => toast(await copyText(summaryTex
 $('#share').addEventListener('click', async () => {
   const url = location.origin + location.pathname + '#d=' + encode(S);
   toast(await copyText(url) ? 'Link copiado – quem abrir vê estas contas' : 'Não foi possível copiar');
+});
+$('#salvarModelo').addEventListener('click', () => {
+  const dados = JSON.parse(JSON.stringify(S));
+  dados.bills = dados.bills.filter(b => b.name.trim() || b.amount).map(b => ({ ...b, uncertain: false }));
+  try { localStorage.setItem(KEY_MODELO, JSON.stringify({ salvoEm: Date.now(), dados })); toast('Modelo da casa salvo neste aparelho'); }
+  catch (e) { toast('Não foi possível salvar neste navegador.'); }
+  renderCasa();
+});
+$('#excluirModelo').addEventListener('click', e => {
+  const btn = e.currentTarget;
+  if (!btn.classList.contains('armed')) {
+    btn.classList.add('armed'); btn.textContent = 'Toque de novo para excluir';
+    clearTimeout(btn._t); btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Excluir modelo'; }, 3000);
+    return;
+  }
+  clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = 'Excluir modelo';
+  try { localStorage.removeItem(KEY_MODELO); } catch (e) {}
+  renderCasa(); toast('Modelo excluído deste aparelho');
 });
 try { if (window.self !== window.top) $('#share').style.display = 'none'; } catch (e) { $('#share').style.display = 'none'; }
 
