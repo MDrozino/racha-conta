@@ -2,7 +2,8 @@
 // para extrair as contas num formato fixo e devolve SÓ dados validados.
 // A IA nunca conversa e nunca devolve texto livre para o site.
 
-const MODELOS = (process.env.GEMINI_MODEL || 'gemini-3.8-flash,gemini-3.5-flash-lite')
+// Primeiro o modelo rápido; o mais "pensante" fica de reserva.
+const MODELOS = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite,gemini-3.8-flash')
   .split(',').map(s => s.trim()).filter(Boolean);
 
 const LIMITES = {
@@ -140,7 +141,7 @@ function validar(bruto) {
 }
 
 /* ---------- chamada ao Gemini ---------- */
-async function chamarGemini(modelo, parts, chaveApi) {
+async function chamarGemini(modelo, parts, chaveApi, tempoMs) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chaveApi },
@@ -149,12 +150,12 @@ async function chamarGemini(modelo, parts, chaveApi) {
       contents: [{ role: 'user', parts }],
       generationConfig: {
         temperature: 0,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 16384, // modelos 3.x gastam parte disso "pensando"
         responseMimeType: 'application/json',
         responseJsonSchema: SCHEMA,
       },
     }),
-    signal: AbortSignal.timeout(25_000),
+    signal: AbortSignal.timeout(tempoMs),
   });
   if (!r.ok) {
     let detalhe = ''; try { detalhe = (await r.text()).slice(0, 400); } catch {}
@@ -162,6 +163,9 @@ async function chamarGemini(modelo, parts, chaveApi) {
     const e = new Error('gemini ' + r.status); e.status = r.status; throw e;
   }
   const data = await r.json();
+  const fim = data?.candidates?.[0]?.finishReason;
+  if (fim && fim !== 'STOP') console.error(`[interpretar] ${modelo} terminou com ${fim}`);
+  if (!data?.candidates?.length) console.error(`[interpretar] ${modelo} sem resposta: ${JSON.stringify(data?.promptFeedback || {}).slice(0, 200)}`);
   const texto = (data?.candidates?.[0]?.content?.parts || [])
     .filter(p => typeof p.text === 'string' && !p.thought)
     .map(p => p.text).join('');
@@ -213,22 +217,26 @@ async function handler(req, res) {
     return res.status(400).json({ erro: 'entrada' });
   }
 
-  let cota = false;
+  let cota = false, codigo = '';
+  const prazo = Date.now() + 50_000;               // tempo total máximo da função
   for (const modelo of MODELOS) {
+    const resta = prazo - Date.now();
+    if (resta < 5_000) break;
     try {
-      const bruto = await chamarGemini(modelo, parts, chaveApi);
+      const bruto = await chamarGemini(modelo, parts, chaveApi, Math.min(resta, 30_000));
       return res.status(200).json(validar(bruto));
     } catch (e) {
       if (!e.status) console.error(`[interpretar] erro com ${modelo}: ${e.name} ${e.message}`);
+      codigo = e.status ? String(e.status) : (e.name === 'SyntaxError' ? 'json' : (e.name === 'TimeoutError' ? 'tempo' : 'rede'));
       if (e.status === 429) cota = true;
-      if (e.name === 'TimeoutError' || e.name === 'AbortError') break;
       // 404/403/429: tenta o próximo modelo da lista; JSON inválido também.
       if (e.status && ![403, 404, 429].includes(e.status)) break;
     }
   }
-  return res.status(cota ? 429 : 502).json({ erro: cota ? 'cota' : 'ia' });
+  // "codigo" só diz o tipo de falha (ex.: 400, 404, json), nada da resposta da IA.
+  return res.status(cota ? 429 : 502).json({ erro: cota ? 'cota' : 'ia', codigo });
 }
 
 module.exports = handler;
 module.exports.validar = validar;
-module.exports.config = { maxDuration: 30 };
+module.exports.config = { maxDuration: 60 };

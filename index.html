@@ -412,7 +412,7 @@ async function interpretar(payload) {
     r = await fetch('/api/interpretar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   } catch (e) { throw new Error('Sem conexão com o servidor. Tente de novo.'); }
   let d = null; try { d = await r.json(); } catch (e) {}
-  if (!r.ok) throw new Error(ERROS[d && d.erro] || 'Não consegui interpretar agora. Tente de novo ou preencha manualmente.');
+  if (!r.ok) throw new Error(ERROS[d && d.erro] || `Não consegui interpretar agora. Tente de novo ou preencha manualmente.${d && d.codigo ? ` (código ${d.codigo})` : ` (HTTP ${r.status})`}`);
   return d;
 }
 

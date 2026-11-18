@@ -24,7 +24,7 @@ Site para dividir contas (casa, bar, viagem…), cada conta só entre quem parti
 ## Configurar a IA no Vercel
 1. Crie uma chave grátis em https://aistudio.google.com → **Get API key**. **Não** ative faturamento (assim nunca há cobrança; ao acabar a cota, o site avisa e segue funcionando manualmente).
 2. No Vercel: projeto → **Settings → Environment Variables** → adicione `GEMINI_API_KEY` com a chave (Production e Preview).
-3. Opcional: `GEMINI_MODEL` com os modelos a tentar, em ordem, separados por vírgula (padrão: `gemini-3.8-flash,gemini-3.5-flash-lite`).
+3. Opcional: `GEMINI_MODEL` com os modelos a tentar, em ordem, separados por vírgula (padrão: `gemini-3.5-flash-lite,gemini-3.8-flash` – o rápido primeiro).
 4. Faça um novo deploy (push) para a variável valer.
 
 ## Deploy
