@@ -103,7 +103,7 @@ tfoot td{font-weight:600;border-bottom:0}
     <button class="mic" id="mic" aria-label="Falar as contas">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
     </button>
-    <p class="lead">Toque no microfone e conte:</p>
+    <p class="lead" id="micLead">Toque no microfone e conte:</p>
     <ul class="tips">
       <li><b>Quem está dividindo?</b><span>“Estamos eu, João, Maria e Pedro.”</span></li>
       <li><b>O que foi consumido e quanto custou?</b><span>“3 cervejas de 12 reais, uma porção de 40, aluguel de 3 mil.”</span></li>
@@ -460,8 +460,54 @@ $('#enviarTexto').addEventListener('click', () => {
   });
 });
 
-// Microfone: a gravação entra na próxima etapa.
-$('#mic').addEventListener('click', () => toast('A gravação por voz chega na próxima etapa. Por enquanto, use “Prefere digitar?”.'));
+/* ---------- microfone: grava até 60 s e manda o áudio para a IA ---------- */
+const MIC_MAX = 60;
+const LEAD = 'Toque no microfone e conte:';
+let rec = null;
+function tipoAudio() {
+  const tipos = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
+  return (window.MediaRecorder && MediaRecorder.isTypeSupported) ? (tipos.find(t => MediaRecorder.isTypeSupported(t)) || '') : '';
+}
+const paraBase64 = blob => new Promise((ok, erro) => {
+  const fr = new FileReader();
+  fr.onload = () => ok(String(fr.result).split(',')[1] || '');
+  fr.onerror = erro; fr.readAsDataURL(blob);
+});
+async function iniciarGravacao() {
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { toast('Este navegador não grava áudio. Use “Prefere digitar?”.'); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { toast('Permita o uso do microfone nas configurações do navegador.'); return; }
+  const mime = tipoAudio();
+  const mr = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), audioBitsPerSecond: 32000 });
+  const pedacos = [];
+  const inicio = Date.now();
+  rec = { mr, stream, timer: null };
+  mr.ondataavailable = e => { if (e.data && e.data.size) pedacos.push(e.data); };
+  mr.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    clearInterval(rec.timer); rec = null;
+    $('#mic').classList.remove('rec');
+    const blob = new Blob(pedacos, { type: (mr.mimeType || mime || 'audio/webm') });
+    if (Date.now() - inicio < 1000 || !blob.size) { $('#micLead').textContent = LEAD; toast('Gravação muito curta.'); return; }
+    if (blob.size > 2 * 1024 * 1024) { $('#micLead').textContent = LEAD; toast('Áudio longo demais. Fale por no máximo 1 minuto.'); return; }
+    $('#micLead').textContent = 'Interpretando…';
+    comCarregando([$('#mic'), $('#enviarTexto')], async () => {
+      aplicarIA(await interpretar({ audio: await paraBase64(blob), mime: blob.type }));
+    }).finally(() => { $('#micLead').textContent = LEAD; });
+  };
+  mr.start();
+  $('#mic').classList.add('rec');
+  const tick = () => {
+    const s = Math.floor((Date.now() - inicio) / 1000);
+    $('#micLead').textContent = `Gravando… ${s}s — toque de novo para terminar`;
+    if (s >= MIC_MAX && rec) rec.mr.stop();
+  };
+  tick(); rec.timer = setInterval(tick, 250);
+}
+$('#mic').addEventListener('click', () => {
+  if (rec) rec.mr.stop(); else iniciarGravacao();
+});
 
 /* ---------- compartilhar ---------- */
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2500); }
