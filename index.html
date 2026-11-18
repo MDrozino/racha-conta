@@ -63,7 +63,7 @@ tfoot td{font-weight:600;border-bottom:0}
   <header>
     <div>
       <h1>Racha<span>Conta</span></h1>
-      <p class="sub">Divida as contas da casa, bar, ou qualquer coisa, cada uma só entre quem participa.</p>
+      <p class="sub">Divida as contas da casa, cada uma só entre quem participa.</p>
     </div>
     <div class="row">
       <input type="month" id="month" style="width:auto">
@@ -73,7 +73,7 @@ tfoot td{font-weight:600;border-bottom:0}
   </header>
 
   <section>
-    <h2>Quem divide a conta</h2>
+    <h2>Moradores</h2>
     <form class="row" id="addPerson">
       <input type="text" id="personName" placeholder="Nome (ex.: João)" autocomplete="off">
       <button type="submit">Adicionar</button>
@@ -82,7 +82,7 @@ tfoot td{font-weight:600;border-bottom:0}
   </section>
 
   <section>
-    <h2>Contas a pagar</h2>
+    <h2>Contas do mês</h2>
     <div id="bills"></div>
     <button id="addBill">+ Nova conta</button>
     <p class="hint">“Por peso”: use pesos diferentes quando alguém paga mais (ex.: quarto maior = 1,5; normal = 1). “Pago por” serve para calcular quem deve devolver quanto para quem.</p>
@@ -197,7 +197,7 @@ function renderPeople() {
     <span class="chip" data-pid="${p.id}">
       <input type="text" data-f="pname" value="${esc(p.name)}" placeholder="Nome" aria-label="Nome">
       <button data-act="del-person" title="Remover">×</button>
-    </span>`).join('') || '<span class="muted">Adicione quem racha a conta.</span>';
+    </span>`).join('') || '<span class="muted">Adicione os moradores da casa.</span>';
 }
 
 function renderBills() {
@@ -214,7 +214,7 @@ function renderBills() {
         <button class="ghost" data-act="del-bill">Remover</button>
       </div>
       <div class="parts">
-        ${S.people.length ? '' : '<span class="muted">Adicione os rachadores acima para escolher quem divide esta conta.</span>'}
+        ${S.people.length ? '' : '<span class="muted">Adicione os moradores acima para escolher quem divide esta conta.</span>'}
         ${S.people.map(p => {
           const on = p.id in b.parts;
           return `<span class="part ${on ? 'on' : ''}">
