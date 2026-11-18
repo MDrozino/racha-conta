@@ -23,6 +23,8 @@ button:hover{border-color:var(--accent)}
 button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
 button.ghost:hover{color:var(--warn)}
+button.del{color:#c0392b;border:1.5px solid #c0392b;background:#fff;font-weight:600}
+button.del:hover{background:#c0392b;color:#fff;border-color:#c0392b}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row input[type=text]{width:auto;flex:1;min-width:160px}
 
@@ -272,7 +274,7 @@ function renderBills() {
           <option value="">Ainda não foi paga</option>
           ${S.people.map(p => `<option value="${p.id}" ${b.payer === p.id ? 'selected' : ''}>Pago por ${esc(p.name)}</option>`).join('')}
         </select>
-        <button class="ghost" data-act="del-bill">Remover</button>
+        <button class="del" data-act="del-bill">Remover</button>
       </div>
       <div class="parts">
         ${S.people.length ? '' : '<span class="muted">Adicione os rachadores acima para escolher quem divide esta conta.</span>'}
