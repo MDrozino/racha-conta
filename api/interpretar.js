@@ -7,7 +7,7 @@ const MODELOS = (process.env.GEMINI_MODEL || 'gemini-3.8-flash,gemini-3.5-flash-
 
 const LIMITES = {
   texto: 1000,                 // caracteres
-  audioBytes: 2 * 1024 * 1024, // 2 MB
+  audioBytes: 3 * 1024 * 1024, // 3 MB (WAV 16 kHz mono ≈ 2 MB por minuto)
   pessoas: 20,
   itens: 50,
   nome: 30,
@@ -18,7 +18,8 @@ const LIMITES = {
   porMinuto: 8,                // pedidos por IP
   porDia: 60,
 };
-const AUDIO_TIPOS = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/x-m4a', 'audio/m4a'];
+// Formatos aceitos pela API do Gemini.
+const AUDIO_TIPOS = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/aiff'];
 
 const INSTRUCAO = `Você é um extrator de dados de um app que divide contas entre pessoas (contas da casa, bar, restaurante, viagem).
 Sua ÚNICA tarefa é ler a fala do usuário e preencher o formato JSON definido. Você não conversa, não explica, não responde perguntas e não escreve código.
@@ -155,12 +156,17 @@ async function chamarGemini(modelo, parts, chaveApi) {
     }),
     signal: AbortSignal.timeout(25_000),
   });
-  if (!r.ok) { const e = new Error('gemini ' + r.status); e.status = r.status; throw e; }
+  if (!r.ok) {
+    let detalhe = ''; try { detalhe = (await r.text()).slice(0, 400); } catch {}
+    console.error(`[interpretar] Gemini ${modelo} respondeu ${r.status}: ${detalhe}`);
+    const e = new Error('gemini ' + r.status); e.status = r.status; throw e;
+  }
   const data = await r.json();
   const texto = (data?.candidates?.[0]?.content?.parts || [])
     .filter(p => typeof p.text === 'string' && !p.thought)
     .map(p => p.text).join('');
-  return JSON.parse(texto);
+  try { return JSON.parse(texto); }
+  catch (e) { console.error(`[interpretar] ${modelo} devolveu JSON inválido: ${texto.slice(0, 200)}`); throw e; }
 }
 
 function ipDe(req) {
@@ -213,6 +219,7 @@ async function handler(req, res) {
       const bruto = await chamarGemini(modelo, parts, chaveApi);
       return res.status(200).json(validar(bruto));
     } catch (e) {
+      if (!e.status) console.error(`[interpretar] erro com ${modelo}: ${e.name} ${e.message}`);
       if (e.status === 429) cota = true;
       if (e.name === 'TimeoutError' || e.name === 'AbortError') break;
       // 404/403/429: tenta o próximo modelo da lista; JSON inválido também.
