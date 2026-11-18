@@ -39,6 +39,13 @@ button.ghost:hover{color:var(--warn)}
 .tips li b{display:block;font-size:14px}
 .tips li span{color:var(--muted);font-size:13px}
 .reset{color:var(--warn);border-color:#f0d6cb}
+.typed{max-width:560px;margin:0 auto 16px;text-align:left}
+.typed summary{cursor:pointer;color:var(--accent);text-align:center;font-size:14px;list-style:none}
+.typed summary::-webkit-details-marker{display:none}
+.typed textarea{width:100%;min-height:96px;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;resize:vertical}
+.typed textarea:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+.typed .row{justify-content:space-between;margin-top:8px}
+.busy{opacity:.6;pointer-events:none}
 .reset.armed{background:var(--warn);color:#fff;border-color:var(--warn)}
 
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -104,6 +111,11 @@ tfoot td{font-weight:600;border-bottom:0}
       <li><b>Quem pagou?</b><span>“O João pagou tudo.”</span></li>
       <li><b>Tem taxa de serviço?</b><span>“Mais 10% do garçom.”</span></li>
     </ul>
+    <details class="typed">
+      <summary>Prefere digitar?</summary>
+      <textarea id="fala" maxlength="1000" placeholder="Ex.: Estamos eu, João e Maria. A Maria tomou 3 cervejas de 12, a porção de 40 foi minha e do João, a pizza de 80 foi de todo mundo. O João pagou tudo, mais 10%."></textarea>
+      <div class="row"><span class="muted" id="falaCount">0/1000</span><button class="primary" id="enviarTexto">Preencher</button></div>
+    </details>
     <button class="reset" id="reset">Apagar todos os dados</button>
   </section>
 
@@ -385,8 +397,71 @@ $('#reset').addEventListener('click', e => {
   S = defaults(); renderAll(); toast('Tudo apagado');
 });
 
+/* ---------- IA: interpretar a fala e preencher ---------- */
+const ERROS = {
+  cota: 'Limite de uso da IA atingido por hoje. Preencha manualmente.',
+  limite_local: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
+  texto_longo: 'Texto longo demais (máximo 1.000 caracteres).',
+  audio_longo: 'Áudio longo demais. Fale por no máximo 1 minuto.',
+  config: 'A IA ainda não foi configurada no servidor.',
+};
+async function interpretar(payload) {
+  payload.pessoas = S.people.map(p => p.name).filter(Boolean);
+  let r;
+  try {
+    r = await fetch('/api/interpretar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  } catch (e) { throw new Error('Sem conexão com o servidor. Tente de novo.'); }
+  let d = null; try { d = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(ERROS[d && d.erro] || 'Não consegui interpretar agora. Tente de novo ou preencha manualmente.');
+  return d;
+}
+
+function aplicarIA(d) {
+  if (!d || d.status !== 'ok' || !Array.isArray(d.itens)) { toast('Não encontrei nenhuma conta nisso. Tente descrever de novo.'); return; }
+  const k = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const idDe = nome => {
+    let p = S.people.find(x => k(x.name) === k(nome));
+    if (!p) { p = { id: uid(), name: String(nome) }; S.people.push(p); }
+    return p.id;
+  };
+  (d.pessoas || []).forEach(idDe);
+  S.bills = S.bills.filter(b => b.name.trim() || b.amount);       // tira contas em branco
+  let incertos = 0;
+  for (const it of d.itens) {
+    const parts = {};
+    (it.consumo || []).forEach(c => { parts[idDe(c.nome)] = it.divisao === 'quantidade' ? Number(c.quantidade) || 1 : 1; });
+    if (it.incerto) incertos++;
+    S.bills.push({
+      id: uid(), name: String(it.descricao || ''), amount: Math.round((Number(it.valor_total) || 0) * 100),
+      payer: it.pagador ? idDe(it.pagador) : '', mode: it.divisao === 'quantidade' ? 'peso' : 'igual',
+      parts, uncertain: !!it.incerto,
+    });
+  }
+  if (Number(d.taxa_servico_percent) > 0) S.service = Number(d.taxa_servico_percent);
+  if (!S.bills.length) S.bills.push(emptyBill());
+  renderAll();
+  toast(`Preenchido: ${d.itens.length} conta(s)` + (incertos ? ` — confira as ${incertos} em amarelo.` : '.'));
+}
+
+async function comCarregando(btns, fn) {
+  btns.forEach(b => b.classList.add('busy'));
+  try { await fn(); } catch (e) { toast(e.message); }
+  finally { btns.forEach(b => b.classList.remove('busy')); }
+}
+
+$('#fala').addEventListener('input', e => { $('#falaCount').textContent = `${e.target.value.length}/1000`; });
+$('#enviarTexto').addEventListener('click', () => {
+  const texto = $('#fala').value.trim();
+  if (!texto) { toast('Escreva as contas primeiro.'); return; }
+  comCarregando([$('#enviarTexto'), $('#mic')], async () => {
+    toast('Interpretando…');
+    aplicarIA(await interpretar({ texto }));
+    $('#fala').value = ''; $('#falaCount').textContent = '0/1000';
+  });
+});
+
 // Microfone: a gravação entra na próxima etapa.
-$('#mic').addEventListener('click', () => toast('A entrada por voz está chegando. Por enquanto, preencha abaixo.'));
+$('#mic').addEventListener('click', () => toast('A gravação por voz chega na próxima etapa. Por enquanto, use “Prefere digitar?”.'));
 
 /* ---------- compartilhar ---------- */
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2500); }
