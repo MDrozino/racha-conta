@@ -749,15 +749,54 @@
             }
           } catch (e) {}
         }
-        if (CASA) {
-          const m = lerModelo();
-          if (m) return m;
-        }
+        if (CASA) return lerModelo() || casaPadrao();
         return defaults();
       }
 
-      /* ---------- modo casa (?casa): modelo da casa salvo só neste aparelho ---------- */
+      /* ---------- modo casa (?casa) ----------
+         Regras fixas da casa (valem em qualquer aparelho). Um modelo salvo no aparelho tem prioridade;
+         "Excluir modelo" volta para estas regras. */
       const CASA = new URLSearchParams(location.search).has('casa');
+      const CASA_EU = 'Miguel'; // quem fala "eu" no modo casa
+      function casaPadrao() {
+        const todos = { miguel: 1, marcos: 1, felipe: 1 };
+        // Miguel paga aluguel, condomínio, luz, gás e vaga; os três dividem igual.
+        const conta = (id, name) => ({
+          id,
+          name,
+          amount: 0,
+          payer: 'miguel',
+          mode: 'igual',
+          parts: { ...todos },
+          uncertain: false,
+        });
+        return {
+          people: [
+            { id: 'miguel', name: 'Miguel' },
+            { id: 'marcos', name: 'Marcos' },
+            { id: 'felipe', name: 'Felipe' },
+          ],
+          service: 0,
+          bills: [
+            conta('aluguel', 'Aluguel'),
+            conta('condominio', 'Condomínio'),
+            conta('luz', 'Luz'),
+            conta('gas', 'Gás'),
+            // Internet: o Felipe já pagou; Miguel e Marcos dividem (R$ 50 cada), e esse valor
+            // é descontado do que o Felipe deve nas outras contas.
+            {
+              id: 'internet',
+              name: 'Internet',
+              amount: 10000,
+              payer: 'felipe',
+              mode: 'igual',
+              parts: { miguel: 1, marcos: 1 },
+              uncertain: false,
+            },
+            conta('vaga', 'Vaga de garagem'),
+          ],
+        };
+      }
       const KEY_MODELO = 'racha-conta-modelo-v1';
       function lerModelo() {
         try {
@@ -960,9 +999,9 @@
         const d = dataModelo();
         $('#modeloInfo').textContent = d
           ? `modelo salvo neste aparelho em ${d.toLocaleDateString('pt-BR')}`
-          : 'nenhum modelo salvo ainda';
+          : 'regras fixas da casa (Miguel, Marcos e Felipe)';
         $('#excluirModelo').hidden = !d;
-        $('#reset').textContent = d ? 'Voltar ao modelo da casa' : 'Apagar todos os dados';
+        $('#reset').textContent = 'Voltar ao modelo da casa';
       }
       function renderAll() {
         renderCasa();
@@ -1093,10 +1132,9 @@
         }
         clearTimeout(btn._t);
         btn.classList.remove('armed');
-        const m = CASA ? lerModelo() : null;
-        S = m || defaults();
+        S = CASA ? lerModelo() || casaPadrao() : defaults();
         renderAll();
-        toast(m ? 'Modelo da casa recarregado' : 'Tudo apagado');
+        toast(CASA ? 'Modelo da casa recarregado' : 'Tudo apagado');
       });
 
       /* ---------- IA: interpretar a fala e preencher ---------- */
@@ -1148,6 +1186,7 @@
             .toLowerCase()
             .trim();
         const idDe = nome => {
+          if (CASA && k(nome) === 'eu') nome = CASA_EU;
           let p = S.people.find(x => k(x.name) === k(nome));
           if (!p) {
             p = { id: uid(), name: String(nome) };
@@ -1159,6 +1198,22 @@
         S.bills = S.bills.filter(b => b.name.trim() || b.amount); // tira contas em branco
         let incertos = 0;
         for (const it of d.itens) {
+          // Modo casa: conta que já existe (ex.: "conta de luz" → Luz) só recebe o valor novo;
+          // quem divide e quem paga seguem as regras da casa.
+          const desc = k(it.descricao || '');
+          const existente =
+            CASA && desc
+              ? S.bills.find(b => {
+                  const n = k(b.name);
+                  return n && (n === desc || n.includes(desc) || desc.includes(n));
+                })
+              : null;
+          if (existente) {
+            existente.amount = Math.round((Number(it.valor_total) || 0) * 100);
+            existente.uncertain = !!it.incerto;
+            if (it.incerto) incertos++;
+            continue;
+          }
           const parts = {};
           (it.consumo || []).forEach(c => {
             parts[idDe(c.nome)] = it.divisao === 'quantidade' ? Number(c.quantidade) || 1 : 1;
@@ -1719,8 +1774,9 @@
         try {
           localStorage.removeItem(KEY_MODELO);
         } catch (err) {}
-        renderCasa();
-        toast('Modelo excluído deste aparelho');
+        S = casaPadrao();
+        renderAll();
+        toast('Modelo excluído: voltei às regras fixas da casa');
       });
       try {
         if (window.self !== window.top) $('#share').style.display = 'none';
