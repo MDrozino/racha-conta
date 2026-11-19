@@ -511,6 +511,9 @@
         padding: 0;
         margin: 0;
       }
+      .transfers li.propria {
+        background: var(--accent-soft);
+      }
       .transfers li {
         padding: 10px 12px;
         background: var(--bg);
@@ -782,15 +785,15 @@
             conta('condominio', 'Condomínio'),
             conta('luz', 'Luz'),
             conta('gas', 'Gás'),
-            // Internet: o Felipe já pagou; Miguel e Marcos dividem (R$ 50 cada), e esse valor
-            // é descontado do que o Felipe deve nas outras contas.
+            // Internet: entra no total e é dividida entre os três, mas o Felipe já pagou;
+            // por isso o valor dela é descontado do que o Felipe deve ao Miguel.
             {
               id: 'internet',
               name: 'Internet',
               amount: 10000,
               payer: 'felipe',
               mode: 'igual',
-              parts: { miguel: 1, marcos: 1 },
+              parts: { ...todos },
               uncertain: false,
             },
             conta('vaga', 'Vaga de garagem'),
@@ -828,8 +831,12 @@
         const w = ids.map(id => (b.mode === 'peso' ? parseNum(b.parts[id]) : 1));
         const sw = w.reduce((a, x) => a + x, 0);
         const out = {};
+        Object.defineProperty(out, 'exato', { value: {}, enumerable: false });
         if (!sw || !total) return out;
         const raw = w.map(x => (total * x) / sw);
+        ids.forEach((id, i) => {
+          if (w[i] > 0) out.exato[id] = raw[i];
+        });
         const fl = raw.map(Math.floor);
         const rem = total - fl.reduce((a, x) => a + x, 0);
         const order = raw.map((r, i) => [r - fl[i], i]).sort((x, y) => y[0] - x[0]);
@@ -840,29 +847,50 @@
         return out;
       }
 
+      // Arredonda valores em centavos mantendo a soma (maior resto).
+      function arredondarMantendoSoma(exatos) {
+        const ids = Object.keys(exatos);
+        const total = Math.round(ids.reduce((a, id) => a + exatos[id], 0));
+        const out = {};
+        ids.forEach(id => (out[id] = Math.floor(exatos[id] + 1e-9)));
+        let resto = total - ids.reduce((a, id) => a + out[id], 0);
+        const ordem = ids
+          .map((id, i) => [exatos[id] - out[id], i, id])
+          .sort((x, y) => y[0] - x[0] || x[1] - y[1]);
+        for (let k = 0; resto > 0 && ordem.length; k++, resto--) out[ordem[k % ordem.length][2]]++;
+        return out;
+      }
+
       function compute() {
-        const owe = {},
+        const oweExato = {},
           paid = {},
-          owePaid = {},
+          owePaidExato = {},
           shares = {};
         S.people.forEach(p => {
-          owe[p.id] = 0;
+          oweExato[p.id] = 0;
           paid[p.id] = 0;
-          owePaid[p.id] = 0;
+          owePaidExato[p.id] = 0;
         });
         for (const b of S.bills) {
           const s = split(b);
           shares[b.id] = s;
           const hasPayer = b.payer && person(b.payer) && Object.keys(s).length;
-          for (const id in s) {
-            owe[id] += s[id];
-            if (hasPayer) owePaid[id] += s[id];
+          for (const id in s.exato) {
+            oweExato[id] += s.exato[id];
+            if (hasPayer) owePaidExato[id] += s.exato[id];
           }
           if (hasPayer) paid[b.payer] += withService(b);
         }
+        // Soma as partes exatas de cada pessoa e só então arredonda (uma vez por pessoa).
+        const owe = arredondarMantendoSoma(oweExato);
+        const owePaid = arredondarMantendoSoma(owePaidExato);
         const bal = {};
         S.people.forEach(p => (bal[p.id] = paid[p.id] - owePaid[p.id]));
-        return { owe, paid, owePaid, bal, shares, transfers: settle(bal) };
+        // Modo casa: quem vai receber também vê a própria parte nos acertos (ex.: Miguel → Miguel).
+        const proprias = !CASA
+          ? []
+          : S.people.filter(p => bal[p.id] > 0 && owePaid[p.id] > 0).map(p => [p.id, p.id, owePaid[p.id]]);
+        return { owe, paid, owePaid, bal, shares, transfers: settle(bal), proprias };
       }
 
       function settle(bal) {
@@ -975,8 +1003,11 @@
       return `<tr><td>${esc(p.name)}</td><td>${fmt(R.paid[p.id])}</td><td>${fmt(R.owePaid[p.id])}</td><td class="${v < 0 ? 'neg' : v > 0 ? 'pos' : ''}">${v > 0 ? '+' : ''}${fmt(v)}</td></tr>`;
     }).join('')}</tbody>`;
 
+        const linhaPropria = ([f, , v]) =>
+          `<li class="propria"><span><b>${esc(person(f).name)}</b> → ${esc(person(f).name)} <span class="muted">(própria parte)</span></span><b>${fmt(v)}</b></li>`;
         $('#transfers').innerHTML = R.transfers.length
-          ? R.transfers
+          ? R.proprias.map(linhaPropria).join('') +
+            R.transfers
               .map(
                 ([f, t, v]) =>
                   `<li><span><b>${esc(person(f).name)}</b> → ${esc(person(t).name)}</span><b>${fmt(v)}</b></li>`,
@@ -1728,6 +1759,9 @@
         S.people.forEach(p => L.push(`• ${p.name}: ${fmt(R.owe[p.id])}`));
         if (R.transfers.length) {
           L.push('', '*Acertos*');
+          R.proprias.forEach(([f, , v]) =>
+            L.push(`• ${person(f).name} → ${person(f).name} (própria parte): ${fmt(v)}`),
+          );
           R.transfers.forEach(([f, t, v]) => L.push(`• ${person(f).name} → ${person(t).name}: ${fmt(v)}`));
         }
         return L.join('\n');
