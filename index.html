@@ -29,24 +29,34 @@ button.del:hover{background:#c0392b;color:#fff;border-color:#c0392b}
 .row input[type=text]{width:auto;flex:1;min-width:160px}
 
 /* microfone */
-.voice{text-align:center;padding:28px 18px 22px}
-.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(47,111,94,.35);transition:transform .15s}
-.mic:hover{transform:scale(1.05)}
-.mic svg{width:42px;height:42px}
-.mic.rec{background:#c0392b;box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 1.4s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 18px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
-.voice .lead{font-weight:600;margin:14px 0 10px}
-.tips{list-style:none;padding:0;margin:0 auto 16px;max-width:560px;text-align:left;display:grid;gap:6px}
+.voice h2{margin-bottom:10px}
+.composer{border:1.5px solid var(--line);border-radius:16px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.composer.rec{border-color:#c0392b;box-shadow:0 0 0 3px rgba(192,57,43,.12)}
+.composer textarea{display:block;width:100%;min-height:120px;max-height:45vh;border:0;outline:0;resize:vertical;padding:14px 14px 6px;font:inherit;font-size:16px;line-height:1.5;background:transparent;border-radius:16px 16px 0 0}
+.composer-bar{display:flex;align-items:center;gap:10px;padding:8px 10px 10px 10px;flex-wrap:wrap}
+.mic{width:52px;height:52px;flex:0 0 52px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(47,111,94,.35);transition:transform .15s}
+.mic:hover{transform:scale(1.06)}
+.mic svg{width:24px;height:24px}
+.mic .stop{display:none}
+.mic.rec{background:#c0392b;animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 14px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.mic.rec .ico{display:none}.mic.rec .stop{display:block}
+.status{flex:1;min-width:140px;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.status.ativo{color:#c0392b;font-weight:600}
+.meter{display:none;width:44px;height:8px;border-radius:4px;background:#f3d6d2;overflow:hidden;flex:0 0 44px}
+.meter i{display:block;height:100%;width:0;background:#c0392b;transition:width .08s}
+.composer.rec .meter{display:inline-block}
+.count{font-size:12px;color:var(--muted)}
+.composer-acoes{display:flex;gap:8px;margin-left:auto}
+.dicas{margin-top:12px}
+.dicas summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600}
+.tips{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .tips li{background:var(--bg);border-radius:10px;padding:8px 12px}
 .tips li b{display:block;font-size:14px}
 .tips li span{color:var(--muted);font-size:13px}
+.voice-rodape{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:14px}
 .reset{color:var(--warn);border-color:#f0d6cb}
-.typed{max-width:560px;margin:0 auto 16px;text-align:left}
-.typed summary{cursor:pointer;color:var(--accent);text-align:center;font-size:14px;list-style:none}
-.typed summary::-webkit-details-marker{display:none}
-.typed textarea{width:100%;min-height:96px;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;resize:vertical}
-.typed textarea:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
-.typed .row{justify-content:space-between;margin-top:8px}
 .busy{opacity:.6;pointer-events:none}
 .casa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px}
 [hidden]{display:none!important}
@@ -115,24 +125,37 @@ tfoot td{font-weight:600;border-bottom:0}
   </div>
 
   <section class="voice">
-    <button class="mic" id="mic" aria-label="Falar as contas">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-    </button>
-    <p class="lead" id="micLead">Toque no microfone e conte:</p>
-    <ul class="tips">
-      <li><b>Quem está dividindo?</b><span>“Estamos eu, João, Maria e Pedro.”</span></li>
-      <li><b>O que foi consumido e quanto custou?</b><span>“3 cervejas de 12 reais, uma porção de 40, aluguel de 3 mil.”</span></li>
-      <li><b>Quem consumiu cada coisa?</b><span>“A porção foi minha e do João, a pizza foi de todo mundo.”</span></li>
-      <li><b>Quem pagou?</b><span>“O João pagou tudo.”</span></li>
-      <li><b>Tem taxa de serviço?</b><span>“Mais 10% do garçom.”</span></li>
-    </ul>
-    <details class="typed">
-      <summary>Prefere digitar?</summary>
-      <textarea id="fala" maxlength="1000" placeholder="Ex.: Estamos eu, João e Maria. A Maria tomou 3 cervejas de 12, a porção de 40 foi minha e do João, a pizza de 80 foi de todo mundo. O João pagou tudo, mais 10%."></textarea>
-      <div class="row"><span class="muted" id="falaCount">0/1000</span><button class="primary" id="enviarTexto">Preencher</button></div>
+    <h2>Conte as contas</h2>
+    <div class="composer" id="composer">
+      <textarea id="fala" maxlength="1000" placeholder="Ex.: Estamos eu, João e Maria. A Maria tomou 3 cervejas de 12, a porção de 40 foi minha e do João. O João pagou tudo, mais 10%."></textarea>
+      <div class="composer-bar">
+        <button class="mic" id="mic" aria-label="Falar as contas">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+          <svg class="stop" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
+        <span class="status" id="micLead" aria-live="polite">Toque no microfone e fale, ou digite.</span>
+        <span class="meter" aria-hidden="true"><i id="meterBar"></i></span>
+        <span class="count" id="falaCount">0/1000</span>
+        <span class="composer-acoes">
+          <button class="ghost" id="limparTexto">Limpar</button>
+          <button class="primary" id="enviarTexto">Confirmar</button>
+        </span>
+      </div>
+    </div>
+    <details class="dicas">
+      <summary>O que falar?</summary>
+      <ul class="tips">
+        <li><b>Quem está dividindo?</b><span>“Estamos eu, João, Maria e Pedro.”</span></li>
+        <li><b>O que foi consumido e quanto custou?</b><span>“3 cervejas de 12 reais, uma porção de 40, aluguel de 3 mil.”</span></li>
+        <li><b>Quem consumiu cada coisa?</b><span>“A porção foi minha e do João, a pizza foi de todo mundo.”</span></li>
+        <li><b>Quem pagou?</b><span>“O João pagou tudo.”</span></li>
+        <li><b>Tem taxa de serviço?</b><span>“Mais 10% do garçom.”</span></li>
+      </ul>
     </details>
-    <button class="primary" id="reenviar" hidden>Reenviar último áudio</button>
-    <button class="reset" id="reset">Apagar todos os dados</button>
+    <div class="voice-rodape">
+      <button class="primary" id="reenviar" hidden>Reenviar áudio</button>
+      <button class="reset" id="reset">Apagar todos os dados</button>
+    </div>
   </section>
 
   <section>
@@ -439,27 +462,28 @@ $('#reset').addEventListener('click', e => {
 });
 
 /* ---------- IA: interpretar a fala e preencher ---------- */
-const LEAD = 'Toque no microfone e conte:';
+const LEAD = 'Toque no microfone e fale, ou digite.';
 const ERROS = {
   cota: 'Limite de uso da IA atingido por hoje. Preencha manualmente.',
   limite_local: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
   texto_longo: 'Texto longo demais (máximo 1.000 caracteres).',
-  audio_longo: 'Áudio longo demais. Fale por no máximo 1 minuto.',
+  audio_longo: 'Áudio longo demais. Fale por no máximo 1 minuto e meio.',
   config: 'A IA ainda não foi configurada no servidor.',
 };
-async function interpretar(payload) {
+async function interpretar(payload, acao = 'interpretar') {
   payload.pessoas = S.people.map(p => p.name).filter(Boolean);
   let r;
   try {
     r = await fetch('/api/interpretar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   } catch (e) { throw new Error('Sem conexão com o servidor. Tente de novo.'); }
   let d = null; try { d = await r.json(); } catch (e) {}
-  if (!r.ok) throw new Error(ERROS[d && d.erro] || `Não consegui interpretar agora. Tente de novo ou preencha manualmente.${d && d.codigo ? ` (código ${d.codigo})` : ` (HTTP ${r.status})`}`);
+  const falha = acao === 'transcrever' ? 'Não consegui transcrever agora.' : 'Não consegui interpretar agora. Tente de novo ou preencha manualmente.';
+  if (!r.ok) throw new Error(ERROS[d && d.erro] || `${falha}${d && d.codigo ? ` (código ${d.codigo})` : ` (HTTP ${r.status})`}`);
   return d;
 }
 
 function aplicarIA(d) {
-  if (!d || d.status !== 'ok' || !Array.isArray(d.itens)) { toast('Não encontrei nenhuma conta nisso. Tente descrever de novo.'); return; }
+  if (!d || d.status !== 'ok' || !Array.isArray(d.itens)) { toast('Não encontrei nenhuma conta nisso. Tente descrever de novo.'); return false; }
   const k = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   const idDe = nome => {
     let p = S.people.find(x => k(x.name) === k(nome));
@@ -483,6 +507,7 @@ function aplicarIA(d) {
   if (!S.bills.length) S.bills.push(emptyBill());
   renderAll();
   toast(`Preenchido: ${d.itens.length} conta(s)` + (incertos ? ` — confira as ${incertos} em amarelo.` : '.'));
+  return true;
 }
 
 async function comCarregando(btns, fn) {
@@ -491,35 +516,49 @@ async function comCarregando(btns, fn) {
   finally { btns.forEach(b => b.classList.remove('busy')); }
 }
 
-$('#fala').addEventListener('input', e => { $('#falaCount').textContent = `${e.target.value.length}/1000`; });
-$('#enviarTexto').addEventListener('click', () => {
+/* ---------- caixa de fala: texto + microfone + preencher ---------- */
+const status = (t, ativo = false) => { $('#micLead').textContent = t; $('#micLead').classList.toggle('ativo', ativo); };
+function contarTexto() { $('#falaCount').textContent = `${$('#fala').value.length}/1000`; }
+function mostrarTexto(t) {
+  const el = $('#fala');
+  el.value = t.slice(0, 1000);
+  contarTexto();
+  el.scrollTop = el.scrollHeight;
+}
+$('#fala').addEventListener('input', contarTexto);
+$('#limparTexto').addEventListener('click', () => {
+  if (gravando()) return;
+  mostrarTexto(''); status(LEAD); $('#reenviar').hidden = true; ultimoAudio = null; $('#fala').focus();
+});
+$('#enviarTexto').addEventListener('click', async () => {
+  if (gravando()) { toast('Termine a gravação primeiro (toque no botão vermelho).'); return; }
   const texto = $('#fala').value.trim();
-  if (!texto) { toast('Escreva as contas primeiro.'); return; }
-  comCarregando([$('#enviarTexto'), $('#mic')], async () => {
-    toast('Interpretando…');
-    aplicarIA(await interpretar({ texto }));
-    $('#fala').value = ''; $('#falaCount').textContent = '0/1000';
-    $('#micLead').textContent = LEAD;
+  if (!texto) { toast('Fale ou escreva as contas primeiro.'); return; }
+  status('Interpretando…');
+  let preencheu = false;
+  const ok = await comCarregando([$('#enviarTexto'), $('#mic')], async () => {
+    preencheu = aplicarIA(await interpretar({ texto }));
   });
+  // O texto fica no campo: dá para ajustar e reenviar com um toque.
+  if (ok && preencheu) {
+    status('Preenchido! O texto fica aqui caso queira ajustar e reenviar.');
+    document.querySelector('#bills').closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else status(ok ? LEAD : 'Não deu certo. Toque em “Confirmar” para tentar de novo.');
 });
 
-/* ---------- microfone: grava até 60 s e manda o áudio para a IA ---------- */
-const MIC_MAX = 60;
-let rec = null, ultimoAudio = null;
-async function enviarAudio(blob) {
-  $('#micLead').textContent = 'Interpretando…';
-  $('#reenviar').hidden = true;
-  const ok = await comCarregando([$('#mic'), $('#enviarTexto'), $('#reenviar')], async () => {
-    let wav;
-    try { wav = await paraWav(blob); } catch (e) { throw new Error('Não consegui processar o áudio neste navegador. Use “Prefere digitar?”.'); }
-    if (wav.size > 3 * 1024 * 1024) throw new Error('Áudio longo demais. Fale por no máximo 1 minuto.');
-    aplicarIA(await interpretar({ audio: await paraBase64(wav), mime: 'audio/wav' }));
-  });
-  $('#micLead').textContent = LEAD;
-  $('#reenviar').hidden = ok;            // falhou: dá para reenviar sem falar de novo
-  if (ok) ultimoAudio = null;
-}
-$('#reenviar').addEventListener('click', () => { if (ultimoAudio) enviarAudio(ultimoAudio); });
+/* ---------- voz ----------
+   Computador: ditado do navegador (texto aparece ao vivo).
+   Celular (iPhone/Android) e navegadores sem ditado: grava o áudio sem parar nas pausas
+   e pede só a transcrição à IA; o texto cai no campo para conferir antes de "Confirmar". */
+const MIC_MAX = 90;   // segundos (WAV 16 kHz ≈ 2,9 MB)
+const MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, dit = null, cap = null, ultimoAudio = null;
+const gravando = () => !!(rec || dit || cap);
+const tempo = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+function modoGravando(sim) { $('#mic').classList.toggle('rec', sim); $('#composer').classList.toggle('rec', sim); if (!sim) $('#meterBar').style.width = '0'; }
+
 function tipoAudio() {
   const tipos = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
   return (window.MediaRecorder && MediaRecorder.isTypeSupported) ? (tipos.find(t => MediaRecorder.isTypeSupported(t)) || '') : '';
@@ -548,57 +587,96 @@ const paraBase64 = blob => new Promise((ok, erro) => {
   fr.onload = () => ok(String(fr.result).split(',')[1] || '');
   fr.onerror = erro; fr.readAsDataURL(blob);
 });
-async function iniciarGravacao() {
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { toast('Este navegador não grava áudio. Use “Prefere digitar?”.'); return; }
+
+// item = { blob, antes, vivo }: "antes" é o texto que já estava no campo antes de gravar.
+async function transcrever(item) {
+  const blob = item.blob;
+  status(item.vivo ? 'Completando a transcrição com a IA…' : 'Transcrevendo…');
+  $('#reenviar').hidden = true;
+  const ok = await comCarregando([$('#mic'), $('#enviarTexto'), $('#reenviar')], async () => {
+    let wav;
+    try { wav = await paraWav(blob); } catch (e) { throw new Error('Não consegui processar o áudio neste navegador. Digite o texto.'); }
+    if (wav.size > 3.2 * 1024 * 1024) throw new Error(ERROS.audio_longo);
+    const d = await interpretar({ audio: await paraBase64(wav), mime: 'audio/wav', modo: 'transcrever' }, 'transcrever');
+    const t = String((d && d.texto) || '').trim();
+    if (!t) throw new Error('Não entendi nada no áudio. Tente de novo, mais perto do microfone.');
+    mostrarTexto(item.antes + t);
+  });
+  if (ok) { ultimoAudio = null; status('Confira o texto e toque em “Confirmar”.'); return; }
+  $('#reenviar').hidden = !ultimoAudio;
+  status(item.vivo
+    ? 'Mantive o texto ao vivo (pode faltar algo das pausas). “Reenviar áudio” tenta completar.'
+    : 'A transcrição falhou. Use “Reenviar áudio”, sem falar de novo.');
+}
+$('#reenviar').addEventListener('click', () => { if (ultimoAudio) transcrever(ultimoAudio); });
+
+async function iniciarGravacao(opc = {}) {
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { if (!opc.aoParar) toast('Este navegador não grava áudio. Digite o texto.'); return false; }
+  // Medidor de volume: criado ainda dentro do toque (exigência do iPhone).
+  let ctx = null;
+  try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-  catch (e) { toast('Permita o uso do microfone nas configurações do navegador.'); return; }
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
+  catch (e) { if (ctx) ctx.close(); if (!opc.aoParar) toast('Permita o uso do microfone nas configurações do navegador.'); return false; }
   const mime = tipoAudio();
   const mr = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), audioBitsPerSecond: 32000 });
   const pedacos = [];
   const inicio = Date.now();
-  rec = { mr, stream, timer: null };
+  rec = { mr, stream, timer: null, raf: 0 };
+  if (ctx) {
+    try {
+      await ctx.resume();
+      const an = ctx.createAnalyser(); an.fftSize = 512;
+      ctx.createMediaStreamSource(stream).connect(an);
+      const buf = new Uint8Array(an.fftSize);
+      const loop = () => {
+        if (!rec) return;
+        an.getByteTimeDomainData(buf);
+        let soma = 0; for (const v of buf) soma += (v - 128) ** 2;
+        $('#meterBar').style.width = Math.min(100, Math.sqrt(soma / buf.length) * 4) + '%';
+        rec.raf = requestAnimationFrame(loop);
+      };
+      loop();
+    } catch (e) {}
+  }
   mr.ondataavailable = e => { if (e.data && e.data.size) pedacos.push(e.data); };
   mr.onstop = () => {
     stream.getTracks().forEach(t => t.stop());
-    clearInterval(rec.timer); rec = null;
-    $('#mic').classList.remove('rec');
+    if (ctx) ctx.close();
+    clearInterval(rec.timer); cancelAnimationFrame(rec.raf); rec = null;
+    modoGravando(false);
     const blob = new Blob(pedacos, { type: (mr.mimeType || mime || 'audio/webm') });
-    if (Date.now() - inicio < 1000 || !blob.size) { $('#micLead').textContent = LEAD; toast('Gravação muito curta.'); return; }
-    ultimoAudio = blob;
-    enviarAudio(blob);
+    const curto = Date.now() - inicio < 1000 || !blob.size;
+    if (opc.aoParar) return opc.aoParar(blob, curto);
+    if (curto) { status(LEAD); toast('Gravação muito curta.'); return; }
+    const antes = $('#fala').value.trim();
+    ultimoAudio = { blob, antes: antes ? antes + ' ' : '', vivo: false };
+    transcrever(ultimoAudio);
   };
-  mr.start();
-  $('#mic').classList.add('rec');
+  mr.start(1000);
+  if (opc.aoParar) return true;          // a captura cuida do tempo e do status
+  modoGravando(true);
   const tick = () => {
     const s = Math.floor((Date.now() - inicio) / 1000);
-    $('#micLead').textContent = `Gravando… ${s}s — toque de novo para terminar`;
-    if (s >= MIC_MAX && rec) rec.mr.stop();
+    status(`Gravando ${tempo(s)} · pode pausar · ■ para terminar`, true);
+    if (s >= MIC_MAX && rec) { rec.mr.stop(); toast('Tempo máximo de 1 minuto e meio atingido.'); }
   };
   tick(); rec.timer = setInterval(tick, 250);
+  return true;
 }
-/* ---------- ditado do navegador: fala vira texto no campo, e o envio é por "Preencher" ---------- */
-const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
-let dit = null;
-function mostrarTexto(t) {
-  const el = $('#fala');
-  el.value = t.slice(0, 1000);
-  $('#falaCount').textContent = `${el.value.length}/1000`;
-  el.scrollTop = el.scrollHeight;
-}
+
 function iniciarDitado() {
-  $('.typed').open = true;
   const base = $('#fala').value.trim();
   dit = { ativo: true, base: base ? base + ' ' : '', sessao: '', inicio: Date.now(), timer: null, r: null };
   const nova = () => {
-    const r = new Reconhecedor();
+    const r = new SR();
     r.lang = 'pt-BR'; r.continuous = false; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = e => {
       let final = '', parcial = '';
       for (let i = 0; i < e.results.length; i++) {
         if (e.results[i].isFinal) final += e.results[i][0].transcript; else parcial += e.results[i][0].transcript;
       }
-      dit.sessao = final;
+      dit.sessao = final + parcial;
       mostrarTexto(dit.base + final + parcial);
     };
     r.onerror = e => {
@@ -611,11 +689,11 @@ function iniciarDitado() {
     };
     dit.r = r; return r;
   };
-  try { nova().start(); } catch (e) { dit = null; toast('Não consegui usar o ditado. Use “Prefere digitar?”.'); return; }
-  $('#mic').classList.add('rec');
+  try { nova().start(); } catch (e) { dit = null; iniciarGravacao(); return; }
+  modoGravando(true);
   const tick = () => {
     const s = Math.floor((Date.now() - dit.inicio) / 1000);
-    $('#micLead').textContent = `Ouvindo… ${s}s — toque de novo para terminar`;
+    status(`Ouvindo ${tempo(s)} · ■ para terminar`, true);
     if (s >= 180) pararDitado();
   };
   tick(); dit.timer = setInterval(tick, 250);
@@ -628,16 +706,83 @@ function pararDitado() {
 function terminarDitado() {
   if (!dit) return;
   clearInterval(dit.timer); dit = null;
-  $('#mic').classList.remove('rec');
-  const temTexto = !!$('#fala').value.trim();
-  $('#micLead').textContent = temTexto ? 'Confira o texto abaixo e toque em “Preencher”.' : LEAD;
-  if (temTexto) $('#enviarTexto').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  else toast('Não ouvi nada. Tente de novo.');
+  modoGravando(false);
+  if ($('#fala').value.trim()) status('Confira o texto e toque em “Confirmar”.');
+  else { status(LEAD); toast('Não ouvi nada. Tente de novo.'); }
+}
+
+/* ---------- celular: texto ao vivo + gravação de segurança ----------
+   O ditado do navegador mostra o texto enquanto a pessoa fala e é religado a cada pausa
+   (nada do que já apareceu é apagado). Em paralelo, a gravação não para nas pausas:
+   se o ditado caiu em algum momento, ao terminar a IA transcreve a gravação inteira. */
+async function iniciarCaptura() {
+  const antes = $('#fala').value.trim();
+  const c = { ativo: true, antes: antes ? antes + ' ' : '', base: '', sessao: '', lacuna: false, sr: null,
+              inicio: Date.now(), timer: null, gravando: false, reinicios: [] };
+  c.base = c.antes; cap = c;
+  const novaSR = () => {
+    const r = new SR();
+    r.lang = 'pt-BR'; r.continuous = IOS; r.interimResults = true; r.maxAlternatives = 1;
+    r.onresult = e => {
+      if (cap !== c || !c.ativo) return;
+      let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      c.sessao = t; mostrarTexto(c.base + t);
+    };
+    r.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') c.lacuna = true; };
+    r.onend = () => {
+      if (c.sessao.trim()) { c.base += c.sessao.trim() + ' '; c.sessao = ''; }
+      if (cap !== c || !c.ativo) return;
+      mostrarTexto(c.base);
+      c.lacuna = true;                                   // pausa: pode ter perdido um pedaço
+      const agora = Date.now();
+      c.reinicios = c.reinicios.filter(t => agora - t < 4000); c.reinicios.push(agora);
+      if (c.reinicios.length > 6) { c.sr = null; return; } // religando sem parar: desiste do ao vivo
+      try { c.sr = novaSR(); c.sr.start(); } catch (e) { c.sr = null; }
+    };
+    return r;
+  };
+  try { c.sr = novaSR(); c.sr.start(); } catch (e) { c.sr = null; c.lacuna = true; }
+  modoGravando(true);
+  c.gravando = await iniciarGravacao({ aoParar: (blob, curto) => fecharCaptura(c, curto ? null : blob) });
+  if (cap !== c) return;
+  if (!c.gravando && !c.sr) { cap = null; modoGravando(false); status(LEAD); toast('Permita o uso do microfone nas configurações do navegador.'); return; }
+  const tick = () => {
+    const s = Math.floor((Date.now() - c.inicio) / 1000);
+    status(`${c.sr ? 'Ouvindo' : 'Gravando'} ${tempo(s)} · pode pausar · ■ para terminar`, true);
+    if (s >= MIC_MAX) { pararCaptura(); toast('Tempo máximo de 1 minuto e meio atingido.'); }
+  };
+  tick(); c.timer = setInterval(tick, 250);
+}
+function encerrarAoVivo(c) {
+  c.ativo = false; clearInterval(c.timer);
+  if (c.sessao.trim()) { c.base += c.sessao.trim() + ' '; c.sessao = ''; }
+  mostrarTexto(c.base);                                  // guarda tudo o que já apareceu
+  try { if (c.sr) c.sr.stop(); } catch (e) {}
+}
+function pararCaptura() {
+  const c = cap; if (!c || !c.ativo) return;
+  encerrarAoVivo(c);
+  if (c.gravando && rec) rec.mr.stop(); else fecharCaptura(c, null);
+}
+function fecharCaptura(c, blob) {
+  if (cap !== c) return;
+  if (c.ativo) encerrarAoVivo(c);                        // a gravação parou sozinha
+  cap = null; modoGravando(false);
+  const vivo = $('#fala').value.trim().length > c.antes.trim().length;
+  if (blob && (c.lacuna || !vivo)) {
+    ultimoAudio = { blob, antes: c.antes, vivo };
+    transcrever(ultimoAudio);
+  } else if (vivo) status('Confira o texto e toque em “Confirmar”.');
+  else { status(LEAD); toast('Não ouvi nada. Tente de novo.'); }
 }
 
 $('#mic').addEventListener('click', () => {
-  if (Reconhecedor) { if (dit) pararDitado(); else iniciarDitado(); return; }
-  if (rec) rec.mr.stop(); else iniciarGravacao();     // navegador sem ditado: envia o áudio
+  if (cap) return pararCaptura();
+  if (dit) return pararDitado();
+  if (rec) return rec.mr.stop();
+  if (MOBILE && SR) iniciarCaptura();      // celular: ao vivo + gravação de segurança
+  else if (SR) iniciarDitado();            // computador: ditado ao vivo
+  else iniciarGravacao();                  // sem ditado: grava e transcreve
 });
 
 /* ---------- compartilhar ---------- */
