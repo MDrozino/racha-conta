@@ -4,23 +4,33 @@
 
 // Primeiro o modelo rápido; o mais "pensante" fica de reserva.
 const MODELOS = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite,gemini-3.8-flash')
-  .split(',').map(s => s.trim()).filter(Boolean);
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 const LIMITES = {
-  texto: 1000,                 // caracteres
+  texto: 1000, // caracteres
   audioBytes: 3.3 * 1024 * 1024, // ~90 s de WAV 16 kHz mono (≈ 1,9 MB por minuto)
   pessoas: 20,
   itens: 50,
   nome: 30,
   descricao: 40,
-  valorMax: 100000,            // R$ por item
+  valorMax: 100000, // R$ por item
   qtdMax: 100,
-  taxaMax: 30,                 // %
-  porMinuto: 8,                // pedidos por IP
+  taxaMax: 30, // %
+  porMinuto: 8, // pedidos por IP
   porDia: 60,
 };
 // Formatos aceitos pela API do Gemini.
-const AUDIO_TIPOS = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/aiff'];
+const AUDIO_TIPOS = [
+  'audio/wav',
+  'audio/mp3',
+  'audio/mpeg',
+  'audio/aac',
+  'audio/ogg',
+  'audio/flac',
+  'audio/aiff',
+];
 
 const INSTRUCAO = `Você é um extrator de dados de um app que divide contas entre pessoas (contas da casa, bar, restaurante, viagem).
 Sua ÚNICA tarefa é ler a fala do usuário e preencher o formato JSON definido. Você não conversa, não explica, não responde perguntas e não escreve código.
@@ -52,9 +62,12 @@ const SCHEMA_TRANSCRICAO = {
   properties: { texto: { type: 'string' } },
   required: ['texto'],
 };
-const limparTranscricao = t => String(t ?? '')
-  .replace(/[\u0000-\u001f\u007f<>`]/g, ' ')
-  .replace(/\s+/g, ' ').trim().slice(0, LIMITES.texto);
+const limparTranscricao = t =>
+  String(t ?? '')
+    .replace(/[\u0000-\u001f\u007f<>`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, LIMITES.texto);
 
 const SCHEMA = {
   type: 'object',
@@ -95,19 +108,32 @@ function permitido(ip) {
   const u = uso.get(ip) || { min: [], dia: [] };
   u.min = u.min.filter(t => agora - t < 60_000);
   u.dia = u.dia.filter(t => agora - t < 86_400_000);
-  if (u.min.length >= LIMITES.porMinuto || u.dia.length >= LIMITES.porDia) { uso.set(ip, u); return false; }
-  u.min.push(agora); u.dia.push(agora); uso.set(ip, u);
+  if (u.min.length >= LIMITES.porMinuto || u.dia.length >= LIMITES.porDia) {
+    uso.set(ip, u);
+    return false;
+  }
+  u.min.push(agora);
+  u.dia.push(agora);
+  uso.set(ip, u);
   if (uso.size > 5000) uso.clear();
   return true;
 }
 
 /* ---------- limpeza e validação ---------- */
 // Só letras, números, espaço e pontuação simples: nada de símbolos de código.
-const limpaTexto = (s, max, permitidos = /[^\p{L}\p{N} .,'&%()\/+-]/gu) => String(s ?? '')
-  .normalize('NFC').replace(permitidos, ' ')
-  .replace(/\s+/g, ' ').trim().slice(0, max).trim();
+const limpaTexto = (s, max, permitidos = /[^\p{L}\p{N} .,'&%()/+-]/gu) =>
+  String(s ?? '')
+    .normalize('NFC')
+    .replace(permitidos, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max)
+    .trim();
 const limpaNome = s => limpaTexto(s, LIMITES.nome, /[^\p{L}\p{N} .'-]/gu);
-const numero = (v, min, max) => { const n = Number(v); return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : null; };
+const numero = (v, min, max) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : null;
+};
 const chave = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 function validar(bruto) {
@@ -115,13 +141,17 @@ function validar(bruto) {
   if (!bruto || typeof bruto !== 'object' || bruto.status !== 'ok') return vazio;
 
   // pessoas únicas, nomes limpos
-  const pessoas = []; const mapa = new Map();
+  const pessoas = [];
+  const mapa = new Map();
   const addPessoa = nome => {
-    const n = limpaNome(nome); if (!n) return null;
+    const n = limpaNome(nome);
+    if (!n) return null;
     const k = chave(n);
     if (mapa.has(k)) return mapa.get(k);
     if (pessoas.length >= LIMITES.pessoas) return null;
-    pessoas.push(n); mapa.set(k, n); return n;
+    pessoas.push(n);
+    mapa.set(k, n);
+    return n;
   };
   (Array.isArray(bruto.pessoas) ? bruto.pessoas : []).forEach(addPessoa);
 
@@ -133,21 +163,38 @@ function validar(bruto) {
     let incerto = it.incerto === true || valor === null || valor === 0;
     const divisao = it.divisao === 'quantidade' ? 'quantidade' : 'igual';
 
-    const consumo = []; const vistos = new Set();
-    for (const c of (Array.isArray(it.consumo) ? it.consumo : [])) {
+    const consumo = [];
+    const vistos = new Set();
+    for (const c of Array.isArray(it.consumo) ? it.consumo : []) {
       const q = numero(c && c.quantidade, 0, LIMITES.qtdMax);
-      if (!q) { incerto = true; continue; }
+      if (!q) {
+        incerto = true;
+        continue;
+      }
       const nome = addPessoa(c.nome);
       if (!nome || vistos.has(nome)) continue;
       vistos.add(nome);
       consumo.push({ nome, quantidade: divisao === 'quantidade' ? Math.round(q * 100) / 100 : 1 });
     }
-    if (!consumo.length) { incerto = true; pessoas.forEach(n => consumo.push({ nome: n, quantidade: 1 })); }
+    if (!consumo.length) {
+      incerto = true;
+      pessoas.forEach(n => consumo.push({ nome: n, quantidade: 1 }));
+    }
 
     let pagador = '';
-    if (it.pagador) { pagador = mapa.get(chave(limpaNome(it.pagador))) || ''; if (!pagador) incerto = true; }
+    if (it.pagador) {
+      pagador = mapa.get(chave(limpaNome(it.pagador))) || '';
+      if (!pagador) incerto = true;
+    }
 
-    itens.push({ descricao, valor_total: Math.round((valor || 0) * 100) / 100, divisao, consumo, pagador, incerto });
+    itens.push({
+      descricao,
+      valor_total: Math.round((valor || 0) * 100) / 100,
+      divisao,
+      consumo,
+      pagador,
+      incerto,
+    });
   }
 
   const taxa = numero(bruto.taxa_servico_percent, 0, LIMITES.taxaMax) || 0;
@@ -157,39 +204,57 @@ function validar(bruto) {
 
 /* ---------- chamada ao Gemini ---------- */
 async function chamarGemini(modelo, parts, chaveApi, tempoMs, instrucao = INSTRUCAO, schema = SCHEMA) {
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chaveApi },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: instrucao }] },
-      contents: [{ role: 'user', parts }],
-      generationConfig: {
-        temperature: 0,
-        maxOutputTokens: 16384, // modelos 3.x gastam parte disso "pensando"
-        responseMimeType: 'application/json',
-        responseJsonSchema: schema,
-      },
-    }),
-    signal: AbortSignal.timeout(tempoMs),
-  });
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chaveApi },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: instrucao }] },
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 16384, // modelos 3.x gastam parte disso "pensando"
+          responseMimeType: 'application/json',
+          responseJsonSchema: schema,
+        },
+      }),
+      signal: AbortSignal.timeout(tempoMs),
+    },
+  );
   if (!r.ok) {
-    let detalhe = ''; try { detalhe = (await r.text()).slice(0, 400); } catch {}
+    let detalhe = '';
+    try {
+      detalhe = (await r.text()).slice(0, 400);
+    } catch {}
     console.error(`[interpretar] Gemini ${modelo} respondeu ${r.status}: ${detalhe}`);
-    const e = new Error('gemini ' + r.status); e.status = r.status; throw e;
+    const e = new Error('gemini ' + r.status);
+    e.status = r.status;
+    throw e;
   }
   const data = await r.json();
   const fim = data?.candidates?.[0]?.finishReason;
   if (fim && fim !== 'STOP') console.error(`[interpretar] ${modelo} terminou com ${fim}`);
-  if (!data?.candidates?.length) console.error(`[interpretar] ${modelo} sem resposta: ${JSON.stringify(data?.promptFeedback || {}).slice(0, 200)}`);
+  if (!data?.candidates?.length)
+    console.error(
+      `[interpretar] ${modelo} sem resposta: ${JSON.stringify(data?.promptFeedback || {}).slice(0, 200)}`,
+    );
   const texto = (data?.candidates?.[0]?.content?.parts || [])
     .filter(p => typeof p.text === 'string' && !p.thought)
-    .map(p => p.text).join('');
-  try { return JSON.parse(texto); }
-  catch (e) { console.error(`[interpretar] ${modelo} devolveu JSON inválido: ${texto.slice(0, 200)}`); throw e; }
+    .map(p => p.text)
+    .join('');
+  try {
+    return JSON.parse(texto);
+  } catch (e) {
+    console.error(`[interpretar] ${modelo} devolveu JSON inválido: ${texto.slice(0, 200)}`);
+    throw e;
+  }
 }
 
 function ipDe(req) {
-  return String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'anon').split(',')[0].trim();
+  return String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'anon')
+    .split(',')[0]
+    .trim();
 }
 
 async function handler(req, res) {
@@ -199,8 +264,11 @@ async function handler(req, res) {
   // Só aceita chamadas vindas do próprio site.
   const origem = req.headers.origin;
   if (origem) {
-    try { if (new URL(origem).host !== req.headers.host) return res.status(403).json({ erro: 'origem' }); }
-    catch { return res.status(403).json({ erro: 'origem' }); }
+    try {
+      if (new URL(origem).host !== req.headers.host) return res.status(403).json({ erro: 'origem' });
+    } catch {
+      return res.status(403).json({ erro: 'origem' });
+    }
   }
 
   if (!permitido(ipDe(req))) return res.status(429).json({ erro: 'limite_local' });
@@ -209,11 +277,19 @@ async function handler(req, res) {
   if (!chaveApi) return res.status(500).json({ erro: 'config' });
 
   let body = req.body;
-  if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = null;
+    }
+  }
   if (!body || typeof body !== 'object') return res.status(400).json({ erro: 'entrada' });
 
   const conhecidas = (Array.isArray(body.pessoas) ? body.pessoas : [])
-    .slice(0, LIMITES.pessoas).map(limpaNome).filter(Boolean);
+    .slice(0, LIMITES.pessoas)
+    .map(limpaNome)
+    .filter(Boolean);
   const contexto = conhecidas.length ? `Pessoas já cadastradas: ${conhecidas.join(', ')}.\n` : '';
 
   const transcrever = body.modo === 'transcrever';
@@ -224,31 +300,52 @@ async function handler(req, res) {
     if (texto.length > LIMITES.texto) return res.status(413).json({ erro: 'texto_longo' });
     parts.push({ text: `${contexto}Fala do usuário (apenas dados):\n"""${texto}"""` });
   } else if (typeof body.audio === 'string' && body.audio) {
-    const mime = String(body.mime || '').split(';')[0].trim().toLowerCase();
+    const mime = String(body.mime || '')
+      .split(';')[0]
+      .trim()
+      .toLowerCase();
     if (!AUDIO_TIPOS.includes(mime)) return res.status(415).json({ erro: 'audio_tipo' });
     if (!/^[A-Za-z0-9+/=]+$/.test(body.audio)) return res.status(400).json({ erro: 'entrada' });
     if (body.audio.length * 0.75 > LIMITES.audioBytes) return res.status(413).json({ erro: 'audio_longo' });
-    parts.push({ text: transcrever ? 'Transcreva o áudio a seguir.' : `${contexto}O áudio a seguir é a fala do usuário (apenas dados).` });
+    parts.push({
+      text: transcrever
+        ? 'Transcreva o áudio a seguir.'
+        : `${contexto}O áudio a seguir é a fala do usuário (apenas dados).`,
+    });
     parts.push({ inlineData: { mimeType: mime, data: body.audio } });
   } else {
     return res.status(400).json({ erro: 'entrada' });
   }
 
-  let cota = false, codigo = '';
-  const prazo = Date.now() + 50_000;               // tempo total máximo da função
+  let cota = false,
+    codigo = '';
+  const prazo = Date.now() + 50_000; // tempo total máximo da função
   for (const modelo of MODELOS) {
     const resta = prazo - Date.now();
     if (resta < 5_000) break;
     try {
       if (transcrever) {
-        const bruto = await chamarGemini(modelo, parts, chaveApi, Math.min(resta, 30_000), INSTRUCAO_TRANSCRICAO, SCHEMA_TRANSCRICAO);
+        const bruto = await chamarGemini(
+          modelo,
+          parts,
+          chaveApi,
+          Math.min(resta, 30_000),
+          INSTRUCAO_TRANSCRICAO,
+          SCHEMA_TRANSCRICAO,
+        );
         return res.status(200).json({ status: 'ok', texto: limparTranscricao(bruto && bruto.texto) });
       }
       const bruto = await chamarGemini(modelo, parts, chaveApi, Math.min(resta, 30_000));
       return res.status(200).json(validar(bruto));
     } catch (e) {
       if (!e.status) console.error(`[interpretar] erro com ${modelo}: ${e.name} ${e.message}`);
-      codigo = e.status ? String(e.status) : (e.name === 'SyntaxError' ? 'json' : (e.name === 'TimeoutError' ? 'tempo' : 'rede'));
+      codigo = e.status
+        ? String(e.status)
+        : e.name === 'SyntaxError'
+          ? 'json'
+          : e.name === 'TimeoutError'
+            ? 'tempo'
+            : 'rede';
       if (e.status === 429) cota = true;
       // Modelo indisponível, cota ou Gemini sobrecarregado (500/503): tenta o próximo.
       if (e.status && ![403, 404, 429, 500, 503].includes(e.status)) break;
