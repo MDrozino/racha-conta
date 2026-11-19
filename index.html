@@ -1211,7 +1211,18 @@
         contarTexto();
         el.scrollTop = el.scrollHeight;
       }
-      $('#fala').addEventListener('input', contarTexto);
+      // Só eventos de digitação marcam edição (texto colocado pelo site não dispara "input").
+      let editadoPeloUsuario = false;
+      $('#fala').addEventListener('input', () => {
+        contarTexto();
+        editadoPeloUsuario = true;
+        if (cap && cap.ativo) {
+          const v = $('#fala').value;
+          cap.base = v && !/\s$/.test(v) ? v + ' ' : v;
+          cap.sessao = '';
+          cap.corte = cap.bruto.length;
+        }
+      });
       $('#limparTexto').addEventListener('click', () => {
         if (gravando()) return;
         mostrarTexto('');
@@ -1227,7 +1238,6 @@
           confirmarAoTerminar = true;
           status('Encerrando a gravação…');
           if (cap) pararCaptura();
-          else if (dit) pararDitado();
           else if (rec) rec.mr.stop();
           return;
         }
@@ -1279,10 +1289,9 @@
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       let rec = null,
-        dit = null,
         cap = null,
         ultimoAudio = null;
-      const gravando = () => !!(rec || dit || cap);
+      const gravando = () => !!(rec || cap);
       const tempo = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
       function modoGravando(sim) {
         $('#mic').classList.toggle('rec', sim);
@@ -1352,9 +1361,12 @@
         });
 
       // item = { blob, antes, vivo }: "antes" é o texto que já estava no campo antes de gravar.
-      async function transcrever(item) {
+      // forcar: pedido explícito ("Reenviar áudio"), pode substituir mesmo com edição.
+      async function transcrever(item, forcar = false) {
         const blob = item.blob;
-        status(item.vivo ? 'Completando a transcrição com a IA…' : 'Transcrevendo…');
+        editadoPeloUsuario = false;
+        let respeitouEdicao = false;
+        status(item.vivo ? 'Revisando a transcrição com a IA…' : 'Transcrevendo…');
         $('#reenviar').hidden = true;
         const ok = await comCarregando([$('#mic'), $('#enviarTexto'), $('#reenviar')], async () => {
           let wav;
@@ -1370,22 +1382,29 @@
           );
           const t = String((d && d.texto) || '').trim();
           if (!t) throw new Error('Não entendi nada no áudio. Tente de novo, mais perto do microfone.');
-          mostrarTexto(item.antes + t);
+          // Se a pessoa digitou enquanto a IA revisava, a versão dela vale.
+          if (!forcar && editadoPeloUsuario) respeitouEdicao = true;
+          else mostrarTexto(item.antes + t);
         });
         if (ok) {
           ultimoAudio = null;
-          textoPronto('Confira o texto e toque em “Confirmar”.');
+          textoPronto(
+            respeitouEdicao
+              ? 'Mantive o texto que você editou. Confira e toque em “Confirmar”.'
+              : 'Confira o texto e toque em “Confirmar”.',
+          );
           return;
         }
+        $('#reenviar').textContent = 'Reenviar áudio';
         $('#reenviar').hidden = !ultimoAudio;
         textoPronto(
           item.vivo
-            ? 'Mantive o texto ao vivo (pode faltar algo das pausas). “Reenviar áudio” tenta completar.'
+            ? 'Mantive o texto ao vivo (pode ter erros). “Reenviar áudio” tenta revisar com a IA.'
             : 'A transcrição falhou. Use “Reenviar áudio”, sem falar de novo.',
         );
       }
       $('#reenviar').addEventListener('click', () => {
-        if (ultimoAudio) transcrever(ultimoAudio);
+        if (ultimoAudio) transcrever(ultimoAudio, true);
       });
 
       async function iniciarGravacao(opc = {}) {
@@ -1471,94 +1490,13 @@
         return true;
       }
 
-      function iniciarDitado() {
-        const base = $('#fala').value.trim();
-        dit = {
-          ativo: true,
-          base: base ? base + ' ' : '',
-          sessao: '',
-          inicio: Date.now(),
-          timer: null,
-          r: null,
-        };
-        const nova = () => {
-          const r = new SR();
-          r.lang = 'pt-BR';
-          r.continuous = false;
-          r.interimResults = true;
-          r.maxAlternatives = 1;
-          r.onresult = e => {
-            let final = '',
-              parcial = '';
-            for (let i = 0; i < e.results.length; i++) {
-              if (e.results[i].isFinal) final += e.results[i][0].transcript;
-              else parcial += e.results[i][0].transcript;
-            }
-            dit.sessao = final + parcial;
-            mostrarTexto(dit.base + final + parcial);
-          };
-          r.onerror = e => {
-            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-              toast('Permita o uso do microfone nas configurações do navegador.');
-              pararDitado();
-            }
-          };
-          r.onend = () => {
-            if (dit.sessao) {
-              dit.base += dit.sessao.trim() + ' ';
-              dit.sessao = '';
-            }
-            mostrarTexto(dit.base);
-            if (dit.ativo) {
-              try {
-                nova().start();
-              } catch (e) {
-                pararDitado();
-              }
-            } else terminarDitado();
-          };
-          dit.r = r;
-          return r;
-        };
-        try {
-          nova().start();
-        } catch (e) {
-          dit = null;
-          iniciarGravacao();
-          return;
-        }
-        modoGravando(true);
-        const tick = () => {
-          const s = Math.floor((Date.now() - dit.inicio) / 1000);
-          status(`Ouvindo ${tempo(s)} · ■ para terminar`, true);
-          if (s >= 180) pararDitado();
-        };
-        tick();
-        dit.timer = setInterval(tick, 250);
-      }
-      function pararDitado() {
-        if (!dit) return;
-        dit.ativo = false;
-        try {
-          dit.r.stop();
-        } catch (e) {
-          terminarDitado();
-        }
-      }
-      function terminarDitado() {
-        if (!dit) return;
-        clearInterval(dit.timer);
-        dit = null;
-        modoGravando(false);
-        if ($('#fala').value.trim()) textoPronto('Confira o texto e toque em “Confirmar”.');
-        else nadaOuvido('Não ouvi nada. Tente de novo.');
-      }
-
-      /* ---------- celular: texto ao vivo + gravação de segurança ----------
-   O ditado do navegador mostra o texto enquanto a pessoa fala e é religado a cada pausa
-   (nada do que já apareceu é apagado). Em paralelo, a gravação não para nas pausas:
-   se o ditado caiu em algum momento, ao terminar a IA transcreve a gravação inteira. */
+      /* ---------- voz: texto ao vivo + gravação ----------
+         O ditado do navegador mostra uma prévia enquanto a pessoa fala e é religado a cada pausa
+         (nada do que já apareceu é apagado). Em paralelo, a gravação não para nas pausas.
+         Ao terminar, a IA transcreve a gravação (com pontuação, nomes e números mais certos)
+         e esse texto substitui a prévia; se a IA falhar, a prévia fica. */
       async function iniciarCaptura() {
+        editadoPeloUsuario = false;
         const antes = $('#fala').value.trim();
         const c = {
           ativo: true,
@@ -1566,6 +1504,8 @@
           base: '',
           sessao: '',
           lacuna: false,
+          bruto: '',
+          corte: 0,
           sr: null,
           inicio: Date.now(),
           timer: null,
@@ -1577,15 +1517,17 @@
         const novaSR = () => {
           const r = new SR();
           r.lang = 'pt-BR';
-          r.continuous = IOS;
+          r.continuous = IOS || !MOBILE; // Android encerra a cada frase de qualquer jeito
           r.interimResults = true;
           r.maxAlternatives = 1;
           r.onresult = e => {
             if (cap !== c || !c.ativo) return;
             let t = '';
             for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
-            c.sessao = t;
-            mostrarTexto(c.base + t);
+            c.bruto = t;
+            // Depois de uma edição, só entra o que for falado dali em diante.
+            c.sessao = t.slice(c.corte);
+            mostrarTexto(c.base + c.sessao.replace(/^\s+/, ''));
           };
           r.onerror = e => {
             if (e.error !== 'no-speech' && e.error !== 'aborted') c.lacuna = true;
@@ -1595,6 +1537,8 @@
               c.base += c.sessao.trim() + ' ';
               c.sessao = '';
             }
+            c.bruto = '';
+            c.corte = 0;
             if (cap !== c || !c.ativo) return;
             mostrarTexto(c.base);
             c.lacuna = true; // pausa: pode ter perdido um pedaço
@@ -1669,7 +1613,13 @@
         cap = null;
         modoGravando(false);
         const vivo = $('#fala').value.trim().length > c.antes.trim().length;
-        if (blob && (c.lacuna || !vivo)) {
+        if (blob && editadoPeloUsuario) {
+          // Editou durante a gravação: não substitui; a revisão pela IA fica opcional.
+          ultimoAudio = { blob, antes: c.antes, vivo };
+          $('#reenviar').textContent = 'Revisar com IA';
+          $('#reenviar').hidden = false;
+          textoPronto('Mantive o texto que você editou. “Revisar com IA” é opcional.');
+        } else if (blob) {
           ultimoAudio = { blob, antes: c.antes, vivo };
           transcrever(ultimoAudio);
         } else if (vivo) textoPronto('Confira o texto e toque em “Confirmar”.');
@@ -1678,13 +1628,10 @@
 
       $('#mic').addEventListener('click', () => {
         if (cap) return pararCaptura();
-        if (dit) return pararDitado();
         if (rec) return rec.mr.stop();
-        if (MOBILE && SR)
-          iniciarCaptura(); // celular: ao vivo + gravação de segurança
-        else if (SR)
-          iniciarDitado(); // computador: ditado ao vivo
-        else iniciarGravacao(); // sem ditado: grava e transcreve
+        if (SR)
+          iniciarCaptura(); // prévia ao vivo + gravação transcrita pela IA
+        else iniciarGravacao(); // sem ditado: só grava e transcreve
       });
 
       /* ---------- compartilhar ---------- */
