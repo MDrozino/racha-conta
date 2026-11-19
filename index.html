@@ -1,299 +1,943 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Racha Conta</title>
-<style>
-:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2328;--muted:#6b7078;--line:#e6e2d9;--accent:#2f6f5e;--accent-soft:#e3efe9;--warn:#b4532a;--hl:#d9a400;--hl-soft:#fff8e1;--radius:14px}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:900px;margin:0 auto;padding:24px 16px 64px}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-h1{margin:0;font-size:28px;letter-spacing:-.02em}
-h1 span{color:var(--accent)}
-.sub{color:var(--muted);margin:2px 0 0}
-section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 12px;font-weight:600}
-input,select,button{font:inherit;color:inherit}
-input[type=text],select{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:0;width:100%}
-input:focus,select:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
-button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
-button:hover{border-color:var(--accent)}
-button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
-button.ghost:hover{color:var(--warn)}
-button.del{color:#c0392b;border:1.5px solid #c0392b;background:#fff;font-weight:600}
-button.del:hover{background:#c0392b;color:#fff;border-color:#c0392b}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.row input[type=text]{width:auto;flex:1;min-width:160px}
-
-/* microfone */
-.voice{text-align:center;padding:28px 18px 22px}
-.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(47,111,94,.35);transition:transform .15s}
-.mic:hover{transform:scale(1.05)}
-.mic svg{width:42px;height:42px}
-.mic.rec{background:#c0392b;box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 1.4s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 18px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
-.voice .lead{font-weight:600;margin:14px 0 10px}
-.tips{list-style:none;padding:0;margin:0 auto 16px;max-width:560px;text-align:left;display:grid;gap:6px}
-.tips li{background:var(--bg);border-radius:10px;padding:8px 12px}
-.tips li b{display:block;font-size:14px}
-.tips li span{color:var(--muted);font-size:13px}
-.reset{color:var(--warn);border-color:#f0d6cb}
-.typed{max-width:560px;margin:0 auto 16px;text-align:left}
-.typed summary{cursor:pointer;color:var(--accent);text-align:center;font-size:14px;list-style:none}
-.typed summary::-webkit-details-marker{display:none}
-.typed textarea{width:100%;min-height:96px;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;resize:vertical}
-.typed textarea:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
-.typed .row{justify-content:space-between;margin-top:8px}
-.busy{opacity:.6;pointer-events:none}
-.casa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px}
-[hidden]{display:none!important}
-.casa b{color:var(--accent)}
-.casa .acoes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-.casa .del.armed{background:#c0392b;color:#fff}
-.reset.armed{background:var(--warn);color:#fff;border-color:var(--warn)}
-
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.chip{display:inline-flex;align-items:center;background:var(--accent-soft);border-radius:999px;padding:2px 2px 2px 4px}
-.chip input{border:0!important;background:transparent!important;width:9ch!important;padding:4px 8px!important}
-.chip button{border:0;background:transparent;padding:2px 10px;color:var(--muted)}
-.chip button:hover{color:var(--warn)}
-.bill{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-.bill.warn{border-color:var(--hl);background:var(--hl-soft)}
-.bill .flag{display:none;font-size:12px;font-weight:600;color:#8a6a00;margin-bottom:8px}
-.bill.warn .flag{display:block}
-.bill-top{display:grid;grid-template-columns:1fr 140px 190px auto;gap:8px}
-@media(max-width:640px){.bill-top{grid-template-columns:1fr 1fr}.bill-top .name{grid-column:1/-1}}
-.parts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
-.part{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:#fff}
-.part.on{background:var(--accent-soft);border-color:var(--accent)}
-.part label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;user-select:none}
-.part input[type=checkbox]{accent-color:var(--accent);margin:0}
-.part .w{width:56px!important;padding:2px 6px!important;border-radius:8px}
-.part .share{color:var(--muted);font-size:13px}
-.mode{margin-left:auto;width:auto!important;font-size:13px}
-.service{display:flex;align-items:center;gap:8px;margin:4px 0 14px}
-.service input{width:80px!important}
-.tablewrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-th{font-size:13px;color:var(--muted);font-weight:600}
-tfoot td{font-weight:600;border-bottom:0}
-.neg{color:var(--warn)}.pos{color:var(--accent)}
-.transfers{list-style:none;padding:0;margin:0}
-.transfers li{padding:10px 12px;background:var(--bg);border-radius:10px;margin:6px 0;display:flex;justify-content:space-between;gap:12px}
-.muted{color:var(--muted)}
-.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
-.toast.show{opacity:1}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:700px){.grid2{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<main>
-  <header>
-    <div>
-      <h1>Racha<span>Conta</span></h1>
-      <p class="sub">Divida as contas da casa, bar, ou qualquer coisa, cada uma só entre quem participa.</p>
-    </div>
-    <div class="row">
-      <button id="share">Copiar link</button>
-      <button id="copy" class="primary">Copiar resumo</button>
-    </div>
-  </header>
-
-  <div class="casa" id="casaBar" hidden>
-    <span>🏠 <b>Modo casa</b> · <span id="modeloInfo"></span></span>
-    <span class="acoes">
-      <button class="primary" id="salvarModelo">Salvar como modelo</button>
-      <button class="del" id="excluirModelo" hidden>Excluir modelo</button>
-    </span>
-  </div>
-
-  <section class="voice">
-    <button class="mic" id="mic" aria-label="Falar as contas">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-    </button>
-    <p class="lead" id="micLead">Toque no microfone e conte:</p>
-    <ul class="tips">
-      <li><b>Quem está dividindo?</b><span>“Estamos eu, João, Maria e Pedro.”</span></li>
-      <li><b>O que foi consumido e quanto custou?</b><span>“3 cervejas de 12 reais, uma porção de 40, aluguel de 3 mil.”</span></li>
-      <li><b>Quem consumiu cada coisa?</b><span>“A porção foi minha e do João, a pizza foi de todo mundo.”</span></li>
-      <li><b>Quem pagou?</b><span>“O João pagou tudo.”</span></li>
-      <li><b>Tem taxa de serviço?</b><span>“Mais 10% do garçom.”</span></li>
-    </ul>
-    <details class="typed">
-      <summary>Prefere digitar?</summary>
-      <textarea id="fala" maxlength="1000" placeholder="Ex.: Estamos eu, João e Maria. A Maria tomou 3 cervejas de 12, a porção de 40 foi minha e do João, a pizza de 80 foi de todo mundo. O João pagou tudo, mais 10%."></textarea>
-      <div class="row"><span class="muted" id="falaCount">0/1000</span><button class="primary" id="enviarTexto">Preencher</button></div>
-    </details>
-    <button class="primary" id="reenviar" hidden>Reenviar último áudio</button>
-    <button class="reset" id="reset">Apagar todos os dados</button>
-  </section>
-
-  <section>
-    <h2>Quem divide a conta</h2>
-    <form class="row" id="addPerson">
-      <input type="text" id="personName" placeholder="Nome (ex.: João)" autocomplete="off">
-      <button type="submit">Adicionar</button>
-    </form>
-    <div class="chips" id="people"></div>
-  </section>
-
-  <section>
-    <h2>Contas a pagar</h2>
-    <div class="service">
-      <label for="service">Taxa de serviço</label>
-      <input type="text" inputmode="decimal" id="service" placeholder="0">
-      <span class="muted">%</span>
-    </div>
-    <div id="bills"></div>
-    <button id="addBill">+ Nova conta</button>
-    <p class="hint">No valor dá para digitar “3x12” (3 itens de R$ 12). “Por quantidade”: cada um paga proporcional ao que consumiu (ex.: Maria 3, João 1). “Pago por” serve para calcular quem devolve quanto para quem.</p>
-  </section>
-
-  <section>
-    <h2>Quanto cada um paga</h2>
-    <div class="tablewrap"><table id="matrix"></table></div>
-    <p class="hint" id="serviceNote"></p>
-  </section>
-
-  <section class="grid2">
-    <div>
-      <h2>Saldo (contas já pagas)</h2>
-      <div class="tablewrap"><table id="balances"></table></div>
-    </div>
-    <div>
-      <h2>Acertos</h2>
-      <ul class="transfers" id="transfers"></ul>
-    </div>
-  </section>
-
-  <p class="hint" style="text-align:center">Os dados não ficam salvos: ao abrir a página, tudo começa do zero. Use “Copiar link” para mandar as contas para os outros.</p>
-</main>
-<div class="toast" id="toast"></div>
-
-<script>
-const uid = () => Math.random().toString(36).slice(2, 9);
-const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-const fmt = c => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const showMoney = c => c ? (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
-function parseMoney(s) {
-  s = String(s).trim();
-  const m = s.match(/^(\d+)\s*[x×*]\s*(.+)$/i);           // "3x12" = 3 itens de 12
-  if (m) return parseInt(m[1], 10) * parseMoney(m[2]);
-  s = s.replace(/[^\d,.]/g, '');
-  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
-  const v = parseFloat(s);
-  return isFinite(v) ? Math.round(v * 100) : 0;
-}
-const parseNum = s => { const v = parseFloat(String(s).replace(',', '.')); return isFinite(v) && v > 0 ? v : 0; };
-const showNum = n => n ? String(n).replace('.', ',') : '';
-
-function emptyBill() { return { id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts: {}, uncertain: false }; }
-function defaults() { return { people: [], bills: [emptyBill()], service: 0 }; }
-
-function encode(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
-function decode(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
-
-// Sempre começa do zero; só carrega dados se vierem num link compartilhado.
-function load() {
-  if (location.hash.startsWith('#d=')) {
-    try {
-      const d = decode(location.hash.slice(3));
-      history.replaceState(null, '', location.pathname + location.search);
-      if (d && Array.isArray(d.people) && Array.isArray(d.bills)) {
-        d.service = +d.service || 0;
-        setTimeout(() => toast('Contas do link carregadas'), 300);
-        return d;
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Racha Conta</title>
+    <style>
+      :root {
+        --bg: #f6f4ef;
+        --card: #fff;
+        --ink: #1f2328;
+        --muted: #6b7078;
+        --line: #e6e2d9;
+        --accent: #2f6f5e;
+        --accent-soft: #e3efe9;
+        --warn: #b4532a;
+        --hl: #d9a400;
+        --hl-soft: #fff8e1;
+        --radius: 14px;
       }
-    } catch (e) {}
-  }
-  if (CASA) { const m = lerModelo(); if (m) return m; }
-  return defaults();
-}
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          15px/1.45 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      h1 span {
+        color: var(--accent);
+      }
+      .sub {
+        color: var(--muted);
+        margin: 2px 0 0;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+      h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--muted);
+        margin: 0 0 12px;
+        font-weight: 600;
+      }
+      input,
+      select,
+      button {
+        font: inherit;
+        color: inherit;
+      }
+      input[type='text'],
+      select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: #fff;
+        min-width: 0;
+        width: 100%;
+      }
+      input:focus,
+      select:focus {
+        outline: 3px solid var(--accent-soft);
+        border-color: var(--accent);
+      }
+      button {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 10px;
+        padding: 8px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      button.ghost {
+        border-color: transparent;
+        background: transparent;
+        color: var(--muted);
+        padding: 6px 8px;
+      }
+      button.ghost:hover {
+        color: var(--warn);
+      }
+      button.del {
+        color: #c0392b;
+        border: 1.5px solid #c0392b;
+        background: #fff;
+        font-weight: 600;
+      }
+      button.del:hover {
+        background: #c0392b;
+        color: #fff;
+        border-color: #c0392b;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .row input[type='text'] {
+        width: auto;
+        flex: 1;
+        min-width: 160px;
+      }
 
-/* ---------- modo casa (?casa): modelo da casa salvo só neste aparelho ---------- */
-const CASA = new URLSearchParams(location.search).has('casa');
-const KEY_MODELO = 'racha-conta-modelo-v1';
-function lerModelo() {
-  try {
-    const m = JSON.parse(localStorage.getItem(KEY_MODELO));
-    if (m && Array.isArray(m.dados?.people) && Array.isArray(m.dados?.bills)) { m.dados.service = +m.dados.service || 0; return m.dados; }
-  } catch (e) {}
-  return null;
-}
-function dataModelo() {
-  try { const m = JSON.parse(localStorage.getItem(KEY_MODELO)); return m && m.salvoEm ? new Date(m.salvoEm) : null; } catch (e) { return null; }
-}
+      /* microfone */
+      .voice h2 {
+        margin-bottom: 10px;
+      }
+      .composer {
+        border: 1.5px solid var(--line);
+        border-radius: 16px;
+        background: #fff;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .composer:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      .composer.rec {
+        border-color: #c0392b;
+        box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+      }
+      .composer textarea {
+        display: block;
+        width: 100%;
+        min-height: 120px;
+        max-height: 45vh;
+        border: 0;
+        outline: 0;
+        resize: vertical;
+        padding: 14px 14px 6px;
+        font: inherit;
+        font-size: 16px;
+        line-height: 1.5;
+        background: transparent;
+        border-radius: 16px 16px 0 0;
+      }
+      .composer-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px 10px 10px;
+        flex-wrap: wrap;
+      }
+      .mic {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+        border-radius: 50%;
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        box-shadow: 0 4px 14px rgba(47, 111, 94, 0.35);
+        transition: transform 0.15s;
+      }
+      .mic:hover {
+        transform: scale(1.06);
+      }
+      .mic svg {
+        width: 24px;
+        height: 24px;
+      }
+      .mic .stop {
+        display: none;
+      }
+      .mic.rec {
+        background: #c0392b;
+        animation: pulse 1.4s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.5);
+        }
+        70% {
+          box-shadow: 0 0 0 14px rgba(192, 57, 43, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(192, 57, 43, 0);
+        }
+      }
+      .mic.rec .ico {
+        display: none;
+      }
+      .mic.rec .stop {
+        display: block;
+      }
+      .status {
+        flex: 1;
+        min-width: 140px;
+        font-size: 14px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .status.ativo {
+        color: #c0392b;
+        font-weight: 600;
+      }
+      .meter {
+        display: none;
+        width: 44px;
+        height: 8px;
+        border-radius: 4px;
+        background: #f3d6d2;
+        overflow: hidden;
+        flex: 0 0 44px;
+      }
+      .meter i {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: #c0392b;
+        transition: width 0.08s;
+      }
+      .composer.rec .meter {
+        display: inline-block;
+      }
+      .count {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .composer-acoes {
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .dicas {
+        margin-top: 12px;
+      }
+      .dicas summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .tips {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+        display: grid;
+        gap: 6px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .tips li {
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 8px 12px;
+      }
+      .tips li b {
+        display: block;
+        font-size: 14px;
+      }
+      .tips li span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .voice-rodape {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .reset {
+        color: var(--warn);
+        border-color: #f0d6cb;
+      }
+      .busy {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      .casa {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        margin-bottom: 16px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .casa b {
+        color: var(--accent);
+      }
+      .casa .acoes {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .casa .del.armed {
+        background: #c0392b;
+        color: #fff;
+      }
+      .reset.armed {
+        background: var(--warn);
+        color: #fff;
+        border-color: var(--warn);
+      }
 
-let S = load();
-const person = id => S.people.find(p => p.id === id);
-const withService = b => Math.round(b.amount * (100 + (S.service || 0)) / 100);
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        background: var(--accent-soft);
+        border-radius: 999px;
+        padding: 2px 2px 2px 4px;
+      }
+      .chip input {
+        border: 0 !important;
+        background: transparent !important;
+        width: 9ch !important;
+        padding: 4px 8px !important;
+      }
+      .chip button {
+        border: 0;
+        background: transparent;
+        padding: 2px 10px;
+        color: var(--muted);
+      }
+      .chip button:hover {
+        color: var(--warn);
+      }
+      .bill {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      .bill.warn {
+        border-color: var(--hl);
+        background: var(--hl-soft);
+      }
+      .bill .flag {
+        display: none;
+        font-size: 12px;
+        font-weight: 600;
+        color: #8a6a00;
+        margin-bottom: 8px;
+      }
+      .bill.warn .flag {
+        display: block;
+      }
+      .bill-top {
+        display: grid;
+        grid-template-columns: 1fr 140px 190px auto;
+        gap: 8px;
+      }
+      @media (max-width: 640px) {
+        .bill-top {
+          grid-template-columns: 1fr 1fr;
+        }
+        .bill-top .name {
+          grid-column: 1/-1;
+        }
+      }
+      .parts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        align-items: center;
+      }
+      .part {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: #fff;
+      }
+      .part.on {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+      }
+      .part label {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+      .part input[type='checkbox'] {
+        accent-color: var(--accent);
+        margin: 0;
+      }
+      .part .w {
+        width: 56px !important;
+        padding: 2px 6px !important;
+        border-radius: 8px;
+      }
+      .part .share {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .mode {
+        margin-left: auto;
+        width: auto !important;
+        font-size: 13px;
+      }
+      .service {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0 14px;
+      }
+      .service input {
+        width: 80px !important;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: right;
+        padding: 8px 6px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+      th {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      tfoot td {
+        font-weight: 600;
+        border-bottom: 0;
+      }
+      .neg {
+        color: var(--warn);
+      }
+      .pos {
+        color: var(--accent);
+      }
+      .aviso {
+        margin: 10px 0 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--hl-soft);
+        border: 1px solid var(--hl);
+        color: #6b5200;
+        font-size: 14px;
+      }
+      .transfers {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .transfers li.propria {
+        background: var(--accent-soft);
+      }
+      .transfers li {
+        padding: 10px 12px;
+        background: var(--bg);
+        border-radius: 10px;
+        margin: 6px 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .hint {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 10px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+        max-width: 90vw;
+        text-align: center;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 700px) {
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Racha<span>Conta</span></h1>
+          <p class="sub">
+            Divida as contas da casa, bar, ou qualquer coisa, cada uma só entre quem participa.
+          </p>
+        </div>
+        <div class="row">
+          <button id="share">Copiar link</button>
+          <button id="copy" class="primary">Copiar resumo</button>
+        </div>
+      </header>
 
-// Divide em centavos sem perder nenhum (maior resto).
-function split(b) {
-  const total = withService(b);
-  const ids = Object.keys(b.parts).filter(person);
-  const w = ids.map(id => b.mode === 'peso' ? parseNum(b.parts[id]) : 1);
-  const sw = w.reduce((a, x) => a + x, 0);
-  const out = {};
-  if (!sw || !total) return out;
-  const raw = w.map(x => total * x / sw);
-  const fl = raw.map(Math.floor);
-  const rem = total - fl.reduce((a, x) => a + x, 0);
-  const order = raw.map((r, i) => [r - fl[i], i]).sort((x, y) => y[0] - x[0]);
-  for (let k = 0; k < rem; k++) fl[order[k % order.length][1]]++;
-  ids.forEach((id, i) => { if (w[i] > 0) out[id] = fl[i]; });
-  return out;
-}
+      <div class="casa" id="casaBar" hidden>
+        <span>🏠 <b>Modo casa</b> · <span id="modeloInfo"></span></span>
+        <span class="acoes">
+          <button class="primary" id="salvarModelo">Salvar como modelo</button>
+          <button class="del" id="excluirModelo" hidden>Excluir modelo</button>
+        </span>
+      </div>
 
-function compute() {
-  const owe = {}, paid = {}, owePaid = {}, shares = {};
-  S.people.forEach(p => { owe[p.id] = 0; paid[p.id] = 0; owePaid[p.id] = 0; });
-  for (const b of S.bills) {
-    const s = split(b); shares[b.id] = s;
-    const hasPayer = b.payer && person(b.payer) && Object.keys(s).length;
-    for (const id in s) { owe[id] += s[id]; if (hasPayer) owePaid[id] += s[id]; }
-    if (hasPayer) paid[b.payer] += withService(b);
-  }
-  const bal = {}; S.people.forEach(p => bal[p.id] = paid[p.id] - owePaid[p.id]);
-  return { owe, paid, owePaid, bal, shares, transfers: settle(bal) };
-}
+      <section class="voice">
+        <h2>Conte as contas</h2>
+        <div class="composer" id="composer">
+          <textarea
+            id="fala"
+            maxlength="1000"
+            placeholder="Ex.: Estamos eu, João e Maria. A Maria tomou 3 cervejas de 12, a porção de 40 foi minha e do João. O João pagou tudo, mais 10%."
+          ></textarea>
+          <div class="composer-bar">
+            <button class="mic" id="mic" aria-label="Falar as contas">
+              <svg
+                class="ico"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+                <line x1="12" y1="17" x2="12" y2="22" />
+                <line x1="8" y1="22" x2="16" y2="22" />
+              </svg>
+              <svg class="stop" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            </button>
+            <span class="status" id="micLead" aria-live="polite">Toque no microfone e fale, ou digite.</span>
+            <span class="meter" aria-hidden="true"><i id="meterBar"></i></span>
+            <span class="count" id="falaCount">0/1000</span>
+            <span class="composer-acoes">
+              <button class="ghost" id="limparTexto">Limpar</button>
+              <button class="primary" id="enviarTexto">Confirmar</button>
+            </span>
+          </div>
+        </div>
+        <details class="dicas">
+          <summary>O que falar?</summary>
+          <ul class="tips">
+            <li><b>Quem está dividindo?</b><span>“Estamos eu, João, Maria e Pedro.”</span></li>
+            <li>
+              <b>O que foi consumido e quanto custou?</b
+              ><span>“3 cervejas de 12 reais, uma porção de 40, aluguel de 3 mil.”</span>
+            </li>
+            <li>
+              <b>Quem consumiu cada coisa?</b
+              ><span>“A porção foi minha e do João, a pizza foi de todo mundo.”</span>
+            </li>
+            <li><b>Quem pagou?</b><span>“O João pagou tudo.”</span></li>
+            <li><b>Tem taxa de serviço?</b><span>“Mais 10% do garçom.”</span></li>
+          </ul>
+        </details>
+        <div class="voice-rodape">
+          <button class="primary" id="reenviar" hidden>Reenviar áudio</button>
+          <button class="reset" id="reset">Apagar todos os dados</button>
+        </div>
+      </section>
 
-function settle(bal) {
-  const d = [], c = [];
-  for (const id in bal) { if (bal[id] < 0) d.push([id, -bal[id]]); else if (bal[id] > 0) c.push([id, bal[id]]); }
-  d.sort((a, b) => b[1] - a[1]); c.sort((a, b) => b[1] - a[1]);
-  const t = []; let i = 0, j = 0;
-  while (i < d.length && j < c.length) {
-    const v = Math.min(d[i][1], c[j][1]);
-    t.push([d[i][0], c[j][0], v]);
-    d[i][1] -= v; c[j][1] -= v;
-    if (!d[i][1]) i++; if (!c[j][1]) j++;
-  }
-  return t;
-}
+      <section>
+        <h2>Quem divide a conta</h2>
+        <form class="row" id="addPerson">
+          <input type="text" id="personName" placeholder="Nome (ex.: João)" autocomplete="off" />
+          <button type="submit">Adicionar</button>
+        </form>
+        <div class="chips" id="people"></div>
+      </section>
 
-/* ---------- render ---------- */
-function renderPeople() {
-  $('#people').innerHTML = S.people.map(p => `
+      <section>
+        <h2>Contas a pagar</h2>
+        <div class="service">
+          <label for="service">Taxa de serviço</label>
+          <input type="text" inputmode="decimal" id="service" placeholder="0" />
+          <span class="muted">%</span>
+        </div>
+        <div id="bills"></div>
+        <button id="addBill">+ Nova conta</button>
+        <p class="hint">
+          No valor dá para digitar “3x12” (3 itens de R$ 12). “Por quantidade”: cada um paga proporcional ao
+          que consumiu (ex.: Maria 3, João 1). “Pago por” serve para calcular quem devolve quanto para quem.
+        </p>
+      </section>
+
+      <section>
+        <h2>Quanto cada um paga</h2>
+        <div class="tablewrap"><table id="matrix"></table></div>
+        <p class="hint" id="serviceNote"></p>
+      </section>
+
+      <section class="grid2">
+        <div>
+          <h2>Saldo (contas já pagas)</h2>
+          <div class="tablewrap"><table id="balances"></table></div>
+        </div>
+        <div>
+          <h2>Acertos</h2>
+          <ul class="transfers" id="transfers"></ul>
+          <p class="aviso" id="semPagador" hidden></p>
+        </div>
+      </section>
+
+      <p class="hint" style="text-align: center">
+        Os dados não ficam salvos: ao abrir a página, tudo começa do zero. Use “Copiar link” para mandar as
+        contas para os outros.
+      </p>
+    </main>
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const uid = () => Math.random().toString(36).slice(2, 9);
+      const $ = s => document.querySelector(s);
+      const esc = s =>
+        String(s ?? '').replace(
+          /[&<>"']/g,
+          c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+        );
+
+      const fmt = c => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const showMoney = c =>
+        c ? (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+      function parseMoney(s) {
+        s = String(s).trim();
+        const m = s.match(/^(\d+)\s*[x×*]\s*(.+)$/i); // "3x12" = 3 itens de 12
+        if (m) return parseInt(m[1], 10) * parseMoney(m[2]);
+        s = s.replace(/[^\d,.]/g, '');
+        if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+        else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+        const v = parseFloat(s);
+        return isFinite(v) ? Math.round(v * 100) : 0;
+      }
+      const parseNum = s => {
+        const v = parseFloat(String(s).replace(',', '.'));
+        return isFinite(v) && v > 0 ? v : 0;
+      };
+      const showNum = n => (n ? String(n).replace('.', ',') : '');
+
+      function emptyBill() {
+        return { id: uid(), name: '', amount: 0, payer: '', mode: 'igual', parts: {}, uncertain: false };
+      }
+      function defaults() {
+        return { people: [], bills: [emptyBill()], service: 0 };
+      }
+
+      function encode(o) {
+        return btoa(unescape(encodeURIComponent(JSON.stringify(o))))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+      }
+      function decode(s) {
+        s = s.replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(decodeURIComponent(escape(atob(s))));
+      }
+
+      // Sempre começa do zero; só carrega dados se vierem num link compartilhado.
+      function load() {
+        if (location.hash.startsWith('#d=')) {
+          try {
+            const d = decode(location.hash.slice(3));
+            history.replaceState(null, '', location.pathname + location.search);
+            if (d && Array.isArray(d.people) && Array.isArray(d.bills)) {
+              d.service = +d.service || 0;
+              setTimeout(() => toast('Contas do link carregadas'), 300);
+              return d;
+            }
+          } catch (e) {}
+        }
+        if (CASA) return lerModelo() || casaPadrao();
+        return defaults();
+      }
+
+      /* ---------- modo casa (?casa) ----------
+         Regras fixas da casa (valem em qualquer aparelho). Um modelo salvo no aparelho tem prioridade;
+         "Excluir modelo" volta para estas regras. */
+      const CASA = new URLSearchParams(location.search).has('casa');
+      const CASA_EU = 'Miguel'; // quem fala "eu" no modo casa
+      function casaPadrao() {
+        const todos = { miguel: 1, marcos: 1, felipe: 1 };
+        // Miguel paga aluguel, condomínio, luz, gás e vaga; os três dividem igual.
+        const conta = (id, name) => ({
+          id,
+          name,
+          amount: 0,
+          payer: 'miguel',
+          mode: 'igual',
+          parts: { ...todos },
+          uncertain: false,
+        });
+        return {
+          people: [
+            { id: 'miguel', name: 'Miguel' },
+            { id: 'marcos', name: 'Marcos' },
+            { id: 'felipe', name: 'Felipe' },
+          ],
+          service: 0,
+          bills: [
+            conta('aluguel', 'Aluguel'),
+            conta('condominio', 'Condomínio'),
+            conta('luz', 'Luz'),
+            conta('gas', 'Gás'),
+            // Internet: entra no total e é dividida entre os três, mas o Felipe já pagou;
+            // por isso o valor dela é descontado do que o Felipe deve ao Miguel.
+            {
+              id: 'internet',
+              name: 'Internet',
+              amount: 10000,
+              payer: 'felipe',
+              mode: 'igual',
+              parts: { ...todos },
+              uncertain: false,
+            },
+            conta('vaga', 'Vaga de garagem'),
+          ],
+        };
+      }
+      const KEY_MODELO = 'racha-conta-modelo-v1';
+      function lerModelo() {
+        try {
+          const m = JSON.parse(localStorage.getItem(KEY_MODELO));
+          if (m && Array.isArray(m.dados?.people) && Array.isArray(m.dados?.bills)) {
+            m.dados.service = +m.dados.service || 0;
+            return m.dados;
+          }
+        } catch (e) {}
+        return null;
+      }
+      function dataModelo() {
+        try {
+          const m = JSON.parse(localStorage.getItem(KEY_MODELO));
+          return m && m.salvoEm ? new Date(m.salvoEm) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      let S = load();
+      const person = id => S.people.find(p => p.id === id);
+      const withService = b => Math.round((b.amount * (100 + (S.service || 0))) / 100);
+
+      // Divide em centavos sem perder nenhum (maior resto).
+      function split(b) {
+        const total = withService(b);
+        const ids = Object.keys(b.parts).filter(person);
+        const w = ids.map(id => (b.mode === 'peso' ? parseNum(b.parts[id]) : 1));
+        const sw = w.reduce((a, x) => a + x, 0);
+        const out = {};
+        Object.defineProperty(out, 'exato', { value: {}, enumerable: false });
+        if (!sw || !total) return out;
+        const raw = w.map(x => (total * x) / sw);
+        ids.forEach((id, i) => {
+          if (w[i] > 0) out.exato[id] = raw[i];
+        });
+        const fl = raw.map(Math.floor);
+        const rem = total - fl.reduce((a, x) => a + x, 0);
+        const order = raw.map((r, i) => [r - fl[i], i]).sort((x, y) => y[0] - x[0]);
+        for (let k = 0; k < rem; k++) fl[order[k % order.length][1]]++;
+        ids.forEach((id, i) => {
+          if (w[i] > 0) out[id] = fl[i];
+        });
+        return out;
+      }
+
+      // Arredonda valores em centavos mantendo a soma (maior resto).
+      function arredondarMantendoSoma(exatos) {
+        const ids = Object.keys(exatos);
+        const total = Math.round(ids.reduce((a, id) => a + exatos[id], 0));
+        const out = {};
+        ids.forEach(id => (out[id] = Math.floor(exatos[id] + 1e-9)));
+        let resto = total - ids.reduce((a, id) => a + out[id], 0);
+        const ordem = ids
+          .map((id, i) => [exatos[id] - out[id], i, id])
+          .sort((x, y) => y[0] - x[0] || x[1] - y[1]);
+        for (let k = 0; resto > 0 && ordem.length; k++, resto--) out[ordem[k % ordem.length][2]]++;
+        return out;
+      }
+
+      function compute() {
+        const oweExato = {},
+          paid = {},
+          owePaidExato = {},
+          shares = {};
+        S.people.forEach(p => {
+          oweExato[p.id] = 0;
+          paid[p.id] = 0;
+          owePaidExato[p.id] = 0;
+        });
+        for (const b of S.bills) {
+          const s = split(b);
+          shares[b.id] = s;
+          const hasPayer = b.payer && person(b.payer) && Object.keys(s).length;
+          for (const id in s.exato) {
+            oweExato[id] += s.exato[id];
+            if (hasPayer) owePaidExato[id] += s.exato[id];
+          }
+          if (hasPayer) paid[b.payer] += withService(b);
+        }
+        // Soma as partes exatas de cada pessoa e só então arredonda (uma vez por pessoa).
+        const owe = arredondarMantendoSoma(oweExato);
+        const owePaid = arredondarMantendoSoma(owePaidExato);
+        const bal = {};
+        S.people.forEach(p => (bal[p.id] = paid[p.id] - owePaid[p.id]));
+        // Modo casa: quem vai receber também vê a própria parte nos acertos (ex.: Miguel → Miguel).
+        const proprias = !CASA
+          ? []
+          : S.people.filter(p => bal[p.id] > 0 && owePaid[p.id] > 0).map(p => [p.id, p.id, owePaid[p.id]]);
+        return { owe, paid, owePaid, bal, shares, transfers: settle(bal), proprias };
+      }
+
+      function settle(bal) {
+        const d = [],
+          c = [];
+        for (const id in bal) {
+          if (bal[id] < 0) d.push([id, -bal[id]]);
+          else if (bal[id] > 0) c.push([id, bal[id]]);
+        }
+        d.sort((a, b) => b[1] - a[1]);
+        c.sort((a, b) => b[1] - a[1]);
+        const t = [];
+        let i = 0,
+          j = 0;
+        while (i < d.length && j < c.length) {
+          const v = Math.min(d[i][1], c[j][1]);
+          t.push([d[i][0], c[j][0], v]);
+          d[i][1] -= v;
+          c[j][1] -= v;
+          if (!d[i][1]) i++;
+          if (!c[j][1]) j++;
+        }
+        return t;
+      }
+
+      /* ---------- render ---------- */
+      function renderPeople() {
+        $('#people').innerHTML =
+          S.people
+            .map(
+              p => `
     <span class="chip" data-pid="${p.id}">
       <input type="text" data-f="pname" value="${esc(p.name)}" placeholder="Nome" aria-label="Nome">
       <button data-act="del-person" title="Remover">×</button>
-    </span>`).join('') || '<span class="muted">Adicione quem racha a conta.</span>';
-}
+    </span>`,
+            )
+            .join('') || '<span class="muted">Adicione quem racha a conta.</span>';
+      }
 
-function renderBills() {
-  if (!S.bills.length) { $('#bills').innerHTML = '<p class="muted">Nenhuma conta ainda.</p>'; return; }
-  $('#bills').innerHTML = S.bills.map(b => `
+      function renderBills() {
+        if (!S.bills.length) {
+          $('#bills').innerHTML = '<p class="muted">Nenhuma conta ainda.</p>';
+          return;
+        }
+        $('#bills').innerHTML = S.bills
+          .map(
+            b => `
     <div class="bill ${b.uncertain ? 'warn' : ''}" data-bill="${b.id}">
       <div class="flag">Confira esta conta: a IA não teve certeza.</div>
       <div class="bill-top">
@@ -307,390 +951,874 @@ function renderBills() {
       </div>
       <div class="parts">
         ${S.people.length ? '' : '<span class="muted">Adicione os rachadores acima para escolher quem divide esta conta.</span>'}
-        ${S.people.map(p => {
-          const on = p.id in b.parts;
-          return `<span class="part ${on ? 'on' : ''}">
+        ${S.people
+          .map(p => {
+            const on = p.id in b.parts;
+            return `<span class="part ${on ? 'on' : ''}">
             <label><input type="checkbox" data-act="toggle" data-pid="${p.id}" ${on ? 'checked' : ''}> ${esc(p.name)}</label>
             ${on && b.mode === 'peso' ? `<input class="w" type="text" inputmode="decimal" data-f="weight" data-pid="${p.id}" value="${showNum(b.parts[p.id])}" title="Quantidade ou peso">` : ''}
             ${on ? `<span class="share" data-share="${b.id}:${p.id}"></span>` : ''}
           </span>`;
-        }).join('')}
-        ${S.people.length ? `<select class="mode" data-f="mode">
+          })
+          .join('')}
+        ${
+          S.people.length
+            ? `<select class="mode" data-f="mode">
           <option value="igual" ${b.mode !== 'peso' ? 'selected' : ''}>Divisão igual</option>
           <option value="peso" ${b.mode === 'peso' ? 'selected' : ''}>Por quantidade</option>
-        </select>` : ''}
+        </select>`
+            : ''
+        }
       </div>
-    </div>`).join('');
-}
+    </div>`,
+          )
+          .join('');
+      }
 
-function renderSummary() {
-  const R = compute();
-  document.querySelectorAll('[data-share]').forEach(el => {
-    const [bid, pid] = el.dataset.share.split(':');
-    el.textContent = fmt(R.shares[bid]?.[pid] || 0);
-  });
+      function renderSummary() {
+        const R = compute();
+        document.querySelectorAll('[data-share]').forEach(el => {
+          const [bid, pid] = el.dataset.share.split(':');
+          el.textContent = fmt(R.shares[bid]?.[pid] || 0);
+        });
 
-  const P = S.people;
-  const total = S.bills.reduce((a, b) => a + withService(b), 0);
-  $('#matrix').innerHTML = !P.length ? '' : `
+        const P = S.people;
+        const total = S.bills.reduce((a, b) => a + withService(b), 0);
+        $('#matrix').innerHTML = !P.length
+          ? ''
+          : `
     <thead><tr><th>Conta</th><th>Valor</th>${P.map(p => `<th>${esc(p.name)}</th>`).join('')}</tr></thead>
     <tbody>${S.bills.map(b => `<tr><td>${esc(b.name) || '<span class="muted">sem nome</span>'}</td><td>${fmt(withService(b))}</td>${P.map(p => `<td>${R.shares[b.id][p.id] != null ? fmt(R.shares[b.id][p.id]) : '<span class="muted">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody>
     <tfoot><tr><td>Total</td><td>${fmt(total)}</td>${P.map(p => `<td>${fmt(R.owe[p.id])}</td>`).join('')}</tr></tfoot>`;
-  $('#serviceNote').textContent = S.service ? `Valores já incluem ${showNum(S.service)}% de taxa de serviço, proporcional ao consumo de cada um.` : '';
+        $('#serviceNote').textContent = S.service
+          ? `Valores já incluem ${showNum(S.service)}% de taxa de serviço, proporcional ao consumo de cada um.`
+          : '';
 
-  $('#balances').innerHTML = !P.length ? '' : `
+        $('#balances').innerHTML = !P.length
+          ? ''
+          : `
     <thead><tr><th></th><th>Pagou</th><th>Parte</th><th>Saldo</th></tr></thead>
-    <tbody>${P.map(p => { const v = R.bal[p.id]; return `<tr><td>${esc(p.name)}</td><td>${fmt(R.paid[p.id])}</td><td>${fmt(R.owePaid[p.id])}</td><td class="${v < 0 ? 'neg' : v > 0 ? 'pos' : ''}">${v > 0 ? '+' : ''}${fmt(v)}</td></tr>`; }).join('')}</tbody>`;
+    <tbody>${P.map(p => {
+      const v = R.bal[p.id];
+      return `<tr><td>${esc(p.name)}</td><td>${fmt(R.paid[p.id])}</td><td>${fmt(R.owePaid[p.id])}</td><td class="${v < 0 ? 'neg' : v > 0 ? 'pos' : ''}">${v > 0 ? '+' : ''}${fmt(v)}</td></tr>`;
+    }).join('')}</tbody>`;
 
-  $('#transfers').innerHTML = R.transfers.length
-    ? R.transfers.map(([f, t, v]) => `<li><span><b>${esc(person(f).name)}</b> → ${esc(person(t).name)}</span><b>${fmt(v)}</b></li>`).join('')
-    : '<li class="muted">Ninguém deve nada a ninguém.</li>';
-}
+        const linhaPropria = ([f, , v]) =>
+          `<li class="propria"><span><b>${esc(person(f).name)}</b> → ${esc(person(f).name)} <span class="muted">(própria parte)</span></span><b>${fmt(v)}</b></li>`;
+        $('#transfers').innerHTML = R.transfers.length
+          ? R.proprias.map(linhaPropria).join('') +
+            R.transfers
+              .map(
+                ([f, t, v]) =>
+                  `<li><span><b>${esc(person(f).name)}</b> → ${esc(person(t).name)}</span><b>${fmt(v)}</b></li>`,
+              )
+              .join('')
+          : '<li class="muted">Ninguém deve nada a ninguém.</li>';
 
-function renderCasa() {
-  if (!CASA) return;
-  $('#casaBar').hidden = false;
-  const d = dataModelo();
-  $('#modeloInfo').textContent = d ? `modelo salvo neste aparelho em ${d.toLocaleDateString('pt-BR')}` : 'nenhum modelo salvo ainda';
-  $('#excluirModelo').hidden = !d;
-  $('#reset').textContent = d ? 'Voltar ao modelo da casa' : 'Apagar todos os dados';
-}
-function renderAll() {
-  renderCasa();
-  $('#service').value = showNum(S.service);
-  renderPeople(); renderBills(); renderSummary();
-}
-
-/* ---------- eventos ---------- */
-$('#addPerson').addEventListener('submit', e => {
-  e.preventDefault();
-  const name = $('#personName').value.trim(); if (!name) return;
-  const id = uid(); S.people.push({ id, name });
-  // Conta ainda sem ninguém (ou vazia com todos marcados) recebe a pessoa nova.
-  S.bills.forEach(b => {
-    const n = Object.keys(b.parts).filter(person).length;
-    if (!n || (n === S.people.length - 1 && !b.amount)) b.parts[id] = 1;
-  });
-  $('#personName').value = ''; renderAll();
-});
-
-$('#people').addEventListener('input', e => {
-  const pid = e.target.closest('[data-pid]')?.dataset.pid;
-  if (e.target.dataset.f === 'pname') { person(pid).name = e.target.value; renderSummary(); }
-});
-$('#people').addEventListener('change', e => { if (e.target.dataset.f === 'pname') { renderBills(); renderSummary(); } });
-$('#people').addEventListener('click', e => {
-  if (e.target.dataset.act !== 'del-person') return;
-  const pid = e.target.closest('[data-pid]').dataset.pid;
-  S.people = S.people.filter(p => p.id !== pid);
-  S.bills.forEach(b => { delete b.parts[pid]; if (b.payer === pid) b.payer = ''; });
-  renderAll();
-});
-
-$('#service').addEventListener('input', e => { S.service = Math.min(parseNum(e.target.value), 100); renderSummary(); });
-
-const billOf = el => S.bills.find(b => b.id === el.closest('[data-bill]')?.dataset.bill);
-function clearWarn(b, el) { if (b.uncertain) { b.uncertain = false; el.closest('.bill').classList.remove('warn'); } }
-$('#bills').addEventListener('input', e => {
-  const b = billOf(e.target); if (!b) return; const f = e.target.dataset.f;
-  if (f === 'name') b.name = e.target.value;
-  else if (f === 'amount') b.amount = parseMoney(e.target.value);
-  else if (f === 'weight') b.parts[e.target.dataset.pid] = parseNum(e.target.value);
-  else return;
-  clearWarn(b, e.target);
-  renderSummary();
-});
-$('#bills').addEventListener('change', e => {
-  const b = billOf(e.target); if (!b) return; const f = e.target.dataset.f;
-  if (f === 'amount') { e.target.value = showMoney(b.amount); return; }
-  clearWarn(b, e.target);
-  if (f === 'payer') { b.payer = e.target.value; renderSummary(); return; }
-  if (f === 'mode') { b.mode = e.target.value; renderBills(); renderSummary(); return; }
-  if (e.target.dataset.act === 'toggle') {
-    const pid = e.target.dataset.pid;
-    if (e.target.checked) b.parts[pid] = 1; else delete b.parts[pid];
-    renderBills(); renderSummary();
-  }
-});
-$('#bills').addEventListener('click', e => {
-  if (e.target.dataset.act !== 'del-bill') return;
-  const b = billOf(e.target); S.bills = S.bills.filter(x => x !== b); renderAll();
-});
-$('#addBill').addEventListener('click', () => {
-  const parts = {}; S.people.forEach(p => parts[p.id] = 1);
-  S.bills.push({ ...emptyBill(), parts });
-  renderAll();
-  document.querySelector('.bill:last-child [data-f=name]')?.focus();
-});
-
-// Apagar tudo: pede um segundo clique para confirmar.
-$('#reset').addEventListener('click', e => {
-  const btn = e.currentTarget;
-  if (!btn.classList.contains('armed')) {
-    btn.classList.add('armed'); btn.textContent = 'Toque de novo para apagar tudo';
-    clearTimeout(btn._t);
-    btn._t = setTimeout(() => { btn.classList.remove('armed'); renderCasa(); if (!CASA) btn.textContent = 'Apagar todos os dados'; }, 3000);
-    return;
-  }
-  clearTimeout(btn._t);
-  btn.classList.remove('armed');
-  const m = CASA ? lerModelo() : null;
-  S = m || defaults(); renderAll(); toast(m ? 'Modelo da casa recarregado' : 'Tudo apagado');
-});
-
-/* ---------- IA: interpretar a fala e preencher ---------- */
-const LEAD = 'Toque no microfone e conte:';
-const ERROS = {
-  cota: 'Limite de uso da IA atingido por hoje. Preencha manualmente.',
-  limite_local: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
-  texto_longo: 'Texto longo demais (máximo 1.000 caracteres).',
-  audio_longo: 'Áudio longo demais. Fale por no máximo 1 minuto.',
-  config: 'A IA ainda não foi configurada no servidor.',
-};
-async function interpretar(payload) {
-  payload.pessoas = S.people.map(p => p.name).filter(Boolean);
-  let r;
-  try {
-    r = await fetch('/api/interpretar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-  } catch (e) { throw new Error('Sem conexão com o servidor. Tente de novo.'); }
-  let d = null; try { d = await r.json(); } catch (e) {}
-  if (!r.ok) throw new Error(ERROS[d && d.erro] || `Não consegui interpretar agora. Tente de novo ou preencha manualmente.${d && d.codigo ? ` (código ${d.codigo})` : ` (HTTP ${r.status})`}`);
-  return d;
-}
-
-function aplicarIA(d) {
-  if (!d || d.status !== 'ok' || !Array.isArray(d.itens)) { toast('Não encontrei nenhuma conta nisso. Tente descrever de novo.'); return; }
-  const k = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  const idDe = nome => {
-    let p = S.people.find(x => k(x.name) === k(nome));
-    if (!p) { p = { id: uid(), name: String(nome) }; S.people.push(p); }
-    return p.id;
-  };
-  (d.pessoas || []).forEach(idDe);
-  S.bills = S.bills.filter(b => b.name.trim() || b.amount);       // tira contas em branco
-  let incertos = 0;
-  for (const it of d.itens) {
-    const parts = {};
-    (it.consumo || []).forEach(c => { parts[idDe(c.nome)] = it.divisao === 'quantidade' ? Number(c.quantidade) || 1 : 1; });
-    if (it.incerto) incertos++;
-    S.bills.push({
-      id: uid(), name: String(it.descricao || ''), amount: Math.round((Number(it.valor_total) || 0) * 100),
-      payer: it.pagador ? idDe(it.pagador) : '', mode: it.divisao === 'quantidade' ? 'peso' : 'igual',
-      parts, uncertain: !!it.incerto,
-    });
-  }
-  if (Number(d.taxa_servico_percent) > 0) S.service = Number(d.taxa_servico_percent);
-  if (!S.bills.length) S.bills.push(emptyBill());
-  renderAll();
-  toast(`Preenchido: ${d.itens.length} conta(s)` + (incertos ? ` — confira as ${incertos} em amarelo.` : '.'));
-}
-
-async function comCarregando(btns, fn) {
-  btns.forEach(b => b.classList.add('busy'));
-  try { await fn(); return true; } catch (e) { toast(e.message); return false; }
-  finally { btns.forEach(b => b.classList.remove('busy')); }
-}
-
-$('#fala').addEventListener('input', e => { $('#falaCount').textContent = `${e.target.value.length}/1000`; });
-$('#enviarTexto').addEventListener('click', () => {
-  const texto = $('#fala').value.trim();
-  if (!texto) { toast('Escreva as contas primeiro.'); return; }
-  comCarregando([$('#enviarTexto'), $('#mic')], async () => {
-    toast('Interpretando…');
-    aplicarIA(await interpretar({ texto }));
-    $('#fala').value = ''; $('#falaCount').textContent = '0/1000';
-    $('#micLead').textContent = LEAD;
-  });
-});
-
-/* ---------- microfone: grava até 60 s e manda o áudio para a IA ---------- */
-const MIC_MAX = 60;
-let rec = null, ultimoAudio = null;
-async function enviarAudio(blob) {
-  $('#micLead').textContent = 'Interpretando…';
-  $('#reenviar').hidden = true;
-  const ok = await comCarregando([$('#mic'), $('#enviarTexto'), $('#reenviar')], async () => {
-    let wav;
-    try { wav = await paraWav(blob); } catch (e) { throw new Error('Não consegui processar o áudio neste navegador. Use “Prefere digitar?”.'); }
-    if (wav.size > 3 * 1024 * 1024) throw new Error('Áudio longo demais. Fale por no máximo 1 minuto.');
-    aplicarIA(await interpretar({ audio: await paraBase64(wav), mime: 'audio/wav' }));
-  });
-  $('#micLead').textContent = LEAD;
-  $('#reenviar').hidden = ok;            // falhou: dá para reenviar sem falar de novo
-  if (ok) ultimoAudio = null;
-}
-$('#reenviar').addEventListener('click', () => { if (ultimoAudio) enviarAudio(ultimoAudio); });
-function tipoAudio() {
-  const tipos = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
-  return (window.MediaRecorder && MediaRecorder.isTypeSupported) ? (tipos.find(t => MediaRecorder.isTypeSupported(t)) || '') : '';
-}
-// O Gemini não aceita WebM: converte a gravação para WAV 16 kHz mono (~2 MB por minuto).
-async function paraWav(blob) {
-  const AC = window.AudioContext || window.webkitAudioContext;
-  const ctx = new AC();
-  let audio;
-  try { audio = await ctx.decodeAudioData(await blob.arrayBuffer()); } finally { ctx.close && ctx.close(); }
-  const taxa = 16000;
-  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(audio.duration * taxa)), taxa);
-  const src = off.createBufferSource(); src.buffer = audio; src.connect(off.destination); src.start();
-  const pcm = (await off.startRendering()).getChannelData(0);
-  const buf = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(buf);
-  const str = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
-  str(0, 'RIFF'); v.setUint32(4, 36 + pcm.length * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
-  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, taxa, true); v.setUint32(28, taxa * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-  str(36, 'data'); v.setUint32(40, pcm.length * 2, true);
-  for (let i = 0; i < pcm.length; i++) { const x = Math.max(-1, Math.min(1, pcm[i])); v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true); }
-  return new Blob([buf], { type: 'audio/wav' });
-}
-const paraBase64 = blob => new Promise((ok, erro) => {
-  const fr = new FileReader();
-  fr.onload = () => ok(String(fr.result).split(',')[1] || '');
-  fr.onerror = erro; fr.readAsDataURL(blob);
-});
-async function iniciarGravacao() {
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { toast('Este navegador não grava áudio. Use “Prefere digitar?”.'); return; }
-  let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-  catch (e) { toast('Permita o uso do microfone nas configurações do navegador.'); return; }
-  const mime = tipoAudio();
-  const mr = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), audioBitsPerSecond: 32000 });
-  const pedacos = [];
-  const inicio = Date.now();
-  rec = { mr, stream, timer: null };
-  mr.ondataavailable = e => { if (e.data && e.data.size) pedacos.push(e.data); };
-  mr.onstop = () => {
-    stream.getTracks().forEach(t => t.stop());
-    clearInterval(rec.timer); rec = null;
-    $('#mic').classList.remove('rec');
-    const blob = new Blob(pedacos, { type: (mr.mimeType || mime || 'audio/webm') });
-    if (Date.now() - inicio < 1000 || !blob.size) { $('#micLead').textContent = LEAD; toast('Gravação muito curta.'); return; }
-    ultimoAudio = blob;
-    enviarAudio(blob);
-  };
-  mr.start();
-  $('#mic').classList.add('rec');
-  const tick = () => {
-    const s = Math.floor((Date.now() - inicio) / 1000);
-    $('#micLead').textContent = `Gravando… ${s}s — toque de novo para terminar`;
-    if (s >= MIC_MAX && rec) rec.mr.stop();
-  };
-  tick(); rec.timer = setInterval(tick, 250);
-}
-/* ---------- ditado do navegador: fala vira texto no campo, e o envio é por "Preencher" ---------- */
-const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
-let dit = null;
-function mostrarTexto(t) {
-  const el = $('#fala');
-  el.value = t.slice(0, 1000);
-  $('#falaCount').textContent = `${el.value.length}/1000`;
-  el.scrollTop = el.scrollHeight;
-}
-function iniciarDitado() {
-  $('.typed').open = true;
-  const base = $('#fala').value.trim();
-  dit = { ativo: true, base: base ? base + ' ' : '', sessao: '', inicio: Date.now(), timer: null, r: null };
-  const nova = () => {
-    const r = new Reconhecedor();
-    r.lang = 'pt-BR'; r.continuous = false; r.interimResults = true; r.maxAlternatives = 1;
-    r.onresult = e => {
-      let final = '', parcial = '';
-      for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) final += e.results[i][0].transcript; else parcial += e.results[i][0].transcript;
+        // Contas sem "Pago por" não entram nos acertos: avisa para não passar despercebido.
+        const semPagador = S.bills.filter(b => b.amount && !(b.payer && person(b.payer))).length;
+        $('#semPagador').hidden = !semPagador || !P.length;
+        $('#semPagador').textContent =
+          semPagador === 1
+            ? '⚠ 1 conta está como “Ainda não foi paga” e não entra nos acertos.'
+            : `⚠ ${semPagador} contas estão como “Ainda não foi paga” e não entram nos acertos.`;
       }
-      dit.sessao = final;
-      mostrarTexto(dit.base + final + parcial);
-    };
-    r.onerror = e => {
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { toast('Permita o uso do microfone nas configurações do navegador.'); pararDitado(); }
-    };
-    r.onend = () => {
-      if (dit.sessao) { dit.base += dit.sessao.trim() + ' '; dit.sessao = ''; }
-      mostrarTexto(dit.base);
-      if (dit.ativo) { try { nova().start(); } catch (e) { pararDitado(); } } else terminarDitado();
-    };
-    dit.r = r; return r;
-  };
-  try { nova().start(); } catch (e) { dit = null; toast('Não consegui usar o ditado. Use “Prefere digitar?”.'); return; }
-  $('#mic').classList.add('rec');
-  const tick = () => {
-    const s = Math.floor((Date.now() - dit.inicio) / 1000);
-    $('#micLead').textContent = `Ouvindo… ${s}s — toque de novo para terminar`;
-    if (s >= 180) pararDitado();
-  };
-  tick(); dit.timer = setInterval(tick, 250);
-}
-function pararDitado() {
-  if (!dit) return;
-  dit.ativo = false;
-  try { dit.r.stop(); } catch (e) { terminarDitado(); }
-}
-function terminarDitado() {
-  if (!dit) return;
-  clearInterval(dit.timer); dit = null;
-  $('#mic').classList.remove('rec');
-  const temTexto = !!$('#fala').value.trim();
-  $('#micLead').textContent = temTexto ? 'Confira o texto abaixo e toque em “Preencher”.' : LEAD;
-  if (temTexto) $('#enviarTexto').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  else toast('Não ouvi nada. Tente de novo.');
-}
 
-$('#mic').addEventListener('click', () => {
-  if (Reconhecedor) { if (dit) pararDitado(); else iniciarDitado(); return; }
-  if (rec) rec.mr.stop(); else iniciarGravacao();     // navegador sem ditado: envia o áudio
-});
+      function renderCasa() {
+        if (!CASA) return;
+        $('#casaBar').hidden = false;
+        const d = dataModelo();
+        $('#modeloInfo').textContent = d
+          ? `modelo salvo neste aparelho em ${d.toLocaleDateString('pt-BR')}`
+          : 'regras fixas da casa (Miguel, Marcos e Felipe)';
+        $('#excluirModelo').hidden = !d;
+        $('#reset').textContent = 'Voltar ao modelo da casa';
+      }
+      function renderAll() {
+        renderCasa();
+        $('#service').value = showNum(S.service);
+        renderPeople();
+        renderBills();
+        renderSummary();
+      }
 
-/* ---------- compartilhar ---------- */
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2500); }
-async function copyText(txt) {
-  try { await navigator.clipboard.writeText(txt); return true; }
-  catch (e) {
-    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
-    const ok = document.execCommand('copy'); ta.remove(); return ok;
-  }
-}
-function summaryText() {
-  const R = compute(), L = [];
-  L.push(`*Racha Conta – ${new Date().toLocaleDateString('pt-BR')}*`, '');
-  S.bills.forEach(b => {
-    const who = Object.keys(R.shares[b.id]).map(id => person(id).name).join(', ');
-    L.push(`• ${b.name || 'Conta'}: ${fmt(withService(b))}${b.payer && person(b.payer) ? ` (pago por ${person(b.payer).name})` : ''} — ${who || 'ninguém'}`);
-  });
-  if (S.service) L.push(`(inclui ${showNum(S.service)}% de taxa de serviço)`);
-  L.push('', '*Parte de cada um*');
-  S.people.forEach(p => L.push(`• ${p.name}: ${fmt(R.owe[p.id])}`));
-  if (R.transfers.length) {
-    L.push('', '*Acertos*');
-    R.transfers.forEach(([f, t, v]) => L.push(`• ${person(f).name} → ${person(t).name}: ${fmt(v)}`));
-  }
-  return L.join('\n');
-}
-$('#copy').addEventListener('click', async () => toast(await copyText(summaryText()) ? 'Resumo copiado – cole no WhatsApp' : 'Não foi possível copiar'));
-$('#share').addEventListener('click', async () => {
-  const url = location.origin + location.pathname + '#d=' + encode(S);
-  toast(await copyText(url) ? 'Link copiado – quem abrir vê estas contas' : 'Não foi possível copiar');
-});
-$('#salvarModelo').addEventListener('click', () => {
-  const dados = JSON.parse(JSON.stringify(S));
-  dados.bills = dados.bills.filter(b => b.name.trim() || b.amount).map(b => ({ ...b, uncertain: false }));
-  try { localStorage.setItem(KEY_MODELO, JSON.stringify({ salvoEm: Date.now(), dados })); toast('Modelo da casa salvo neste aparelho'); }
-  catch (e) { toast('Não foi possível salvar neste navegador.'); }
-  renderCasa();
-});
-$('#excluirModelo').addEventListener('click', e => {
-  const btn = e.currentTarget;
-  if (!btn.classList.contains('armed')) {
-    btn.classList.add('armed'); btn.textContent = 'Toque de novo para excluir';
-    clearTimeout(btn._t); btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Excluir modelo'; }, 3000);
-    return;
-  }
-  clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = 'Excluir modelo';
-  try { localStorage.removeItem(KEY_MODELO); } catch (e) {}
-  renderCasa(); toast('Modelo excluído deste aparelho');
-});
-try { if (window.self !== window.top) $('#share').style.display = 'none'; } catch (e) { $('#share').style.display = 'none'; }
+      /* ---------- eventos ---------- */
+      $('#addPerson').addEventListener('submit', e => {
+        e.preventDefault();
+        const name = $('#personName').value.trim();
+        if (!name) return;
+        const id = uid();
+        S.people.push({ id, name });
+        // Conta ainda sem ninguém (ou vazia com todos marcados) recebe a pessoa nova.
+        S.bills.forEach(b => {
+          const n = Object.keys(b.parts).filter(person).length;
+          if (!n || (n === S.people.length - 1 && !b.amount)) b.parts[id] = 1;
+        });
+        $('#personName').value = '';
+        renderAll();
+      });
 
-renderAll();
-</script>
-</body>
+      $('#people').addEventListener('input', e => {
+        const pid = e.target.closest('[data-pid]')?.dataset.pid;
+        if (e.target.dataset.f === 'pname') {
+          person(pid).name = e.target.value;
+          renderSummary();
+        }
+      });
+      $('#people').addEventListener('change', e => {
+        if (e.target.dataset.f === 'pname') {
+          renderBills();
+          renderSummary();
+        }
+      });
+      $('#people').addEventListener('click', e => {
+        if (e.target.dataset.act !== 'del-person') return;
+        const pid = e.target.closest('[data-pid]').dataset.pid;
+        S.people = S.people.filter(p => p.id !== pid);
+        S.bills.forEach(b => {
+          delete b.parts[pid];
+          if (b.payer === pid) b.payer = '';
+        });
+        renderAll();
+      });
+
+      $('#service').addEventListener('input', e => {
+        S.service = Math.min(parseNum(e.target.value), 100);
+        renderSummary();
+      });
+
+      const billOf = el => S.bills.find(b => b.id === el.closest('[data-bill]')?.dataset.bill);
+      function clearWarn(b, el) {
+        if (b.uncertain) {
+          b.uncertain = false;
+          el.closest('.bill').classList.remove('warn');
+        }
+      }
+      $('#bills').addEventListener('input', e => {
+        const b = billOf(e.target);
+        if (!b) return;
+        const f = e.target.dataset.f;
+        if (f === 'name') b.name = e.target.value;
+        else if (f === 'amount') b.amount = parseMoney(e.target.value);
+        else if (f === 'weight') b.parts[e.target.dataset.pid] = parseNum(e.target.value);
+        else return;
+        clearWarn(b, e.target);
+        renderSummary();
+      });
+      $('#bills').addEventListener('change', e => {
+        const b = billOf(e.target);
+        if (!b) return;
+        const f = e.target.dataset.f;
+        if (f === 'amount') {
+          e.target.value = showMoney(b.amount);
+          return;
+        }
+        clearWarn(b, e.target);
+        if (f === 'payer') {
+          b.payer = e.target.value;
+          renderSummary();
+          return;
+        }
+        if (f === 'mode') {
+          b.mode = e.target.value;
+          renderBills();
+          renderSummary();
+          return;
+        }
+        if (e.target.dataset.act === 'toggle') {
+          const pid = e.target.dataset.pid;
+          if (e.target.checked) b.parts[pid] = 1;
+          else delete b.parts[pid];
+          renderBills();
+          renderSummary();
+        }
+      });
+      $('#bills').addEventListener('click', e => {
+        if (e.target.dataset.act !== 'del-bill') return;
+        const b = billOf(e.target);
+        S.bills = S.bills.filter(x => x !== b);
+        renderAll();
+      });
+      $('#addBill').addEventListener('click', () => {
+        const parts = {};
+        S.people.forEach(p => (parts[p.id] = 1));
+        S.bills.push({ ...emptyBill(), parts });
+        renderAll();
+        document.querySelector('.bill:last-child [data-f=name]')?.focus();
+      });
+
+      // Apagar tudo: pede um segundo clique para confirmar.
+      $('#reset').addEventListener('click', e => {
+        const btn = e.currentTarget;
+        if (!btn.classList.contains('armed')) {
+          btn.classList.add('armed');
+          btn.textContent = 'Toque de novo para apagar tudo';
+          clearTimeout(btn._t);
+          btn._t = setTimeout(() => {
+            btn.classList.remove('armed');
+            renderCasa();
+            if (!CASA) btn.textContent = 'Apagar todos os dados';
+          }, 3000);
+          return;
+        }
+        clearTimeout(btn._t);
+        btn.classList.remove('armed');
+        S = CASA ? lerModelo() || casaPadrao() : defaults();
+        renderAll();
+        toast(CASA ? 'Modelo da casa recarregado' : 'Tudo apagado');
+      });
+
+      /* ---------- IA: interpretar a fala e preencher ---------- */
+      const LEAD = 'Toque no microfone e fale, ou digite.';
+      const ERROS = {
+        cota: 'Limite de uso da IA atingido por hoje. Preencha manualmente.',
+        limite_local: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
+        texto_longo: 'Texto longo demais (máximo 1.000 caracteres).',
+        audio_longo: 'Áudio longo demais. Fale por no máximo 1 minuto e meio.',
+        config: 'A IA ainda não foi configurada no servidor.',
+      };
+      async function interpretar(payload, acao = 'interpretar') {
+        payload.pessoas = S.people.map(p => p.name).filter(Boolean);
+        let r;
+        try {
+          r = await fetch('/api/interpretar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } catch (e) {
+          throw new Error('Sem conexão com o servidor. Tente de novo.');
+        }
+        let d = null;
+        try {
+          d = await r.json();
+        } catch (e) {}
+        const falha =
+          acao === 'transcrever'
+            ? 'Não consegui transcrever agora.'
+            : 'Não consegui interpretar agora. Tente de novo ou preencha manualmente.';
+        if (!r.ok)
+          throw new Error(
+            ERROS[d && d.erro] ||
+              `${falha}${d && d.codigo ? ` (código ${d.codigo})` : ` (HTTP ${r.status})`}`,
+          );
+        return d;
+      }
+
+      function aplicarIA(d) {
+        if (!d || d.status !== 'ok' || !Array.isArray(d.itens)) {
+          toast('Não encontrei nenhuma conta nisso. Tente descrever de novo.');
+          return false;
+        }
+        const k = s =>
+          String(s)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+        const idDe = nome => {
+          if (CASA && k(nome) === 'eu') nome = CASA_EU;
+          let p = S.people.find(x => k(x.name) === k(nome));
+          if (!p) {
+            p = { id: uid(), name: String(nome) };
+            S.people.push(p);
+          }
+          return p.id;
+        };
+        (d.pessoas || []).forEach(idDe);
+        S.bills = S.bills.filter(b => b.name.trim() || b.amount); // tira contas em branco
+        let incertos = 0;
+        for (const it of d.itens) {
+          // Modo casa: conta que já existe (ex.: "conta de luz" → Luz) só recebe o valor novo;
+          // quem divide e quem paga seguem as regras da casa.
+          const desc = k(it.descricao || '');
+          const existente =
+            CASA && desc
+              ? S.bills.find(b => {
+                  const n = k(b.name);
+                  return n && (n === desc || n.includes(desc) || desc.includes(n));
+                })
+              : null;
+          if (existente) {
+            existente.amount = Math.round((Number(it.valor_total) || 0) * 100);
+            existente.uncertain = !!it.incerto;
+            if (it.incerto) incertos++;
+            continue;
+          }
+          const parts = {};
+          (it.consumo || []).forEach(c => {
+            parts[idDe(c.nome)] = it.divisao === 'quantidade' ? Number(c.quantidade) || 1 : 1;
+          });
+          if (it.incerto) incertos++;
+          S.bills.push({
+            id: uid(),
+            name: String(it.descricao || ''),
+            amount: Math.round((Number(it.valor_total) || 0) * 100),
+            payer: it.pagador ? idDe(it.pagador) : '',
+            mode: it.divisao === 'quantidade' ? 'peso' : 'igual',
+            parts,
+            uncertain: !!it.incerto,
+          });
+        }
+        if (Number(d.taxa_servico_percent) > 0) S.service = Number(d.taxa_servico_percent);
+        if (!S.bills.length) S.bills.push(emptyBill());
+        renderAll();
+        toast(
+          `Preenchido: ${d.itens.length} conta(s)` +
+            (incertos ? ` — confira as ${incertos} em amarelo.` : '.'),
+        );
+        return true;
+      }
+
+      async function comCarregando(btns, fn) {
+        btns.forEach(b => b.classList.add('busy'));
+        try {
+          await fn();
+          return true;
+        } catch (e) {
+          toast(e.message);
+          return false;
+        } finally {
+          btns.forEach(b => b.classList.remove('busy'));
+        }
+      }
+
+      /* ---------- caixa de fala: texto + microfone + preencher ---------- */
+      const status = (t, ativo = false) => {
+        $('#micLead').textContent = t;
+        $('#micLead').classList.toggle('ativo', ativo);
+      };
+      function contarTexto() {
+        $('#falaCount').textContent = `${$('#fala').value.length}/1000`;
+      }
+      function mostrarTexto(t) {
+        const el = $('#fala');
+        el.value = t.slice(0, 1000);
+        contarTexto();
+        el.scrollTop = el.scrollHeight;
+      }
+      // Só eventos de digitação marcam edição (texto colocado pelo site não dispara "input").
+      let editadoPeloUsuario = false;
+      $('#fala').addEventListener('input', () => {
+        contarTexto();
+        editadoPeloUsuario = true;
+        if (cap && cap.ativo) {
+          const v = $('#fala').value;
+          cap.base = v && !/\s$/.test(v) ? v + ' ' : v;
+          cap.sessao = '';
+          cap.corte = cap.bruto.length;
+        }
+      });
+      $('#limparTexto').addEventListener('click', () => {
+        if (gravando()) return;
+        mostrarTexto('');
+        status(LEAD);
+        $('#reenviar').hidden = true;
+        ultimoAudio = null;
+        $('#fala').focus();
+      });
+      // "Confirmar" durante a gravação: encerra a gravação e confirma assim que o texto ficar pronto.
+      let confirmarAoTerminar = false;
+      $('#enviarTexto').addEventListener('click', () => {
+        if (gravando()) {
+          confirmarAoTerminar = true;
+          status('Encerrando a gravação…');
+          if (cap) pararCaptura();
+          else if (rec) rec.mr.stop();
+          return;
+        }
+        confirmar();
+      });
+      // Chamado quando a fala terminou de virar texto.
+      function textoPronto(msg) {
+        const confirmarAgora = confirmarAoTerminar && !!$('#fala').value.trim();
+        confirmarAoTerminar = false;
+        if (confirmarAgora) confirmar();
+        else status(msg);
+      }
+      function nadaOuvido(msg) {
+        confirmarAoTerminar = false;
+        status(LEAD);
+        toast(msg);
+      }
+      async function confirmar() {
+        const texto = $('#fala').value.trim();
+        if (!texto) {
+          toast('Fale ou escreva as contas primeiro.');
+          return;
+        }
+        status('Interpretando…');
+        let preencheu = false;
+        const ok = await comCarregando([$('#enviarTexto'), $('#mic')], async () => {
+          preencheu = aplicarIA(await interpretar({ texto }));
+        });
+        // O texto fica no campo: dá para ajustar e reenviar com um toque.
+        if (ok && preencheu) {
+          status('Preenchido! O texto fica aqui caso queira ajustar e reenviar.');
+          document
+            .querySelector('#bills')
+            .closest('section')
+            .scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else status(ok ? LEAD : 'Não deu certo. Toque em “Confirmar” para tentar de novo.');
+      }
+
+      /* ---------- voz ----------
+   Computador: ditado do navegador (texto aparece ao vivo).
+   Celular (iPhone/Android) e navegadores sem ditado: grava o áudio sem parar nas pausas
+   e pede só a transcrição à IA; o texto cai no campo para conferir antes de "Confirmar". */
+      const MIC_MAX = 90; // segundos (WAV 16 kHz ≈ 2,9 MB)
+      const MOBILE =
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const IOS =
+        /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let rec = null,
+        cap = null,
+        ultimoAudio = null;
+      const gravando = () => !!(rec || cap);
+      const tempo = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      function modoGravando(sim) {
+        $('#mic').classList.toggle('rec', sim);
+        $('#composer').classList.toggle('rec', sim);
+        if (!sim) $('#meterBar').style.width = '0';
+      }
+
+      function tipoAudio() {
+        const tipos = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+          'audio/ogg;codecs=opus',
+          'audio/ogg',
+        ];
+        return window.MediaRecorder && MediaRecorder.isTypeSupported
+          ? tipos.find(t => MediaRecorder.isTypeSupported(t)) || ''
+          : '';
+      }
+      // O Gemini não aceita WebM: converte a gravação para WAV 16 kHz mono (~2 MB por minuto).
+      async function paraWav(blob) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AC();
+        let audio;
+        try {
+          audio = await ctx.decodeAudioData(await blob.arrayBuffer());
+        } finally {
+          ctx.close && ctx.close();
+        }
+        const taxa = 16000;
+        const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(audio.duration * taxa)), taxa);
+        const src = off.createBufferSource();
+        src.buffer = audio;
+        src.connect(off.destination);
+        src.start();
+        const pcm = (await off.startRendering()).getChannelData(0);
+        const buf = new ArrayBuffer(44 + pcm.length * 2),
+          v = new DataView(buf);
+        const str = (o, t) => {
+          for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i));
+        };
+        str(0, 'RIFF');
+        v.setUint32(4, 36 + pcm.length * 2, true);
+        str(8, 'WAVE');
+        str(12, 'fmt ');
+        v.setUint32(16, 16, true);
+        v.setUint16(20, 1, true);
+        v.setUint16(22, 1, true);
+        v.setUint32(24, taxa, true);
+        v.setUint32(28, taxa * 2, true);
+        v.setUint16(32, 2, true);
+        v.setUint16(34, 16, true);
+        str(36, 'data');
+        v.setUint32(40, pcm.length * 2, true);
+        for (let i = 0; i < pcm.length; i++) {
+          const x = Math.max(-1, Math.min(1, pcm[i]));
+          v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true);
+        }
+        return new Blob([buf], { type: 'audio/wav' });
+      }
+      const paraBase64 = blob =>
+        new Promise((ok, erro) => {
+          const fr = new FileReader();
+          fr.onload = () => ok(String(fr.result).split(',')[1] || '');
+          fr.onerror = erro;
+          fr.readAsDataURL(blob);
+        });
+
+      // item = { blob, antes, vivo }: "antes" é o texto que já estava no campo antes de gravar.
+      // forcar: pedido explícito ("Reenviar áudio"), pode substituir mesmo com edição.
+      async function transcrever(item, forcar = false) {
+        const blob = item.blob;
+        editadoPeloUsuario = false;
+        let respeitouEdicao = false;
+        status(item.vivo ? 'Revisando a transcrição com a IA…' : 'Transcrevendo…');
+        $('#reenviar').hidden = true;
+        const ok = await comCarregando([$('#mic'), $('#enviarTexto'), $('#reenviar')], async () => {
+          let wav;
+          try {
+            wav = await paraWav(blob);
+          } catch (e) {
+            throw new Error('Não consegui processar o áudio neste navegador. Digite o texto.');
+          }
+          if (wav.size > 3.2 * 1024 * 1024) throw new Error(ERROS.audio_longo);
+          const d = await interpretar(
+            { audio: await paraBase64(wav), mime: 'audio/wav', modo: 'transcrever' },
+            'transcrever',
+          );
+          const t = String((d && d.texto) || '').trim();
+          if (!t) throw new Error('Não entendi nada no áudio. Tente de novo, mais perto do microfone.');
+          // Se a pessoa digitou enquanto a IA revisava, a versão dela vale.
+          if (!forcar && editadoPeloUsuario) respeitouEdicao = true;
+          else mostrarTexto(item.antes + t);
+        });
+        if (ok) {
+          ultimoAudio = null;
+          textoPronto(
+            respeitouEdicao
+              ? 'Mantive o texto que você editou. Confira e toque em “Confirmar”.'
+              : 'Confira o texto e toque em “Confirmar”.',
+          );
+          return;
+        }
+        $('#reenviar').textContent = 'Reenviar áudio';
+        $('#reenviar').hidden = !ultimoAudio;
+        textoPronto(
+          item.vivo
+            ? 'Mantive o texto ao vivo (pode ter erros). “Reenviar áudio” tenta revisar com a IA.'
+            : 'A transcrição falhou. Use “Reenviar áudio”, sem falar de novo.',
+        );
+      }
+      $('#reenviar').addEventListener('click', () => {
+        if (ultimoAudio) transcrever(ultimoAudio, true);
+      });
+
+      async function iniciarGravacao(opc = {}) {
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+          if (!opc.aoParar) toast('Este navegador não grava áudio. Digite o texto.');
+          return false;
+        }
+        // Medidor de volume: criado ainda dentro do toque (exigência do iPhone).
+        let ctx = null;
+        try {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true },
+          });
+        } catch (e) {
+          if (ctx) ctx.close();
+          if (!opc.aoParar) toast('Permita o uso do microfone nas configurações do navegador.');
+          return false;
+        }
+        const mime = tipoAudio();
+        const mr = new MediaRecorder(stream, {
+          ...(mime ? { mimeType: mime } : {}),
+          audioBitsPerSecond: 32000,
+        });
+        const pedacos = [];
+        const inicio = Date.now();
+        rec = { mr, stream, timer: null, raf: 0 };
+        if (ctx) {
+          try {
+            await ctx.resume();
+            const an = ctx.createAnalyser();
+            an.fftSize = 512;
+            ctx.createMediaStreamSource(stream).connect(an);
+            const buf = new Uint8Array(an.fftSize);
+            const loop = () => {
+              if (!rec) return;
+              an.getByteTimeDomainData(buf);
+              let soma = 0;
+              for (const v of buf) soma += (v - 128) ** 2;
+              $('#meterBar').style.width = Math.min(100, Math.sqrt(soma / buf.length) * 4) + '%';
+              rec.raf = requestAnimationFrame(loop);
+            };
+            loop();
+          } catch (e) {}
+        }
+        mr.ondataavailable = e => {
+          if (e.data && e.data.size) pedacos.push(e.data);
+        };
+        mr.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          if (ctx) ctx.close();
+          clearInterval(rec.timer);
+          cancelAnimationFrame(rec.raf);
+          rec = null;
+          modoGravando(false);
+          const blob = new Blob(pedacos, { type: mr.mimeType || mime || 'audio/webm' });
+          const curto = Date.now() - inicio < 1000 || !blob.size;
+          if (opc.aoParar) return opc.aoParar(blob, curto);
+          if (curto) {
+            nadaOuvido('Gravação muito curta.');
+            return;
+          }
+          const antes = $('#fala').value.trim();
+          ultimoAudio = { blob, antes: antes ? antes + ' ' : '', vivo: false };
+          transcrever(ultimoAudio);
+        };
+        mr.start(1000);
+        if (opc.aoParar) return true; // a captura cuida do tempo e do status
+        modoGravando(true);
+        const tick = () => {
+          const s = Math.floor((Date.now() - inicio) / 1000);
+          status(`Gravando ${tempo(s)} · pode pausar · ■ para terminar`, true);
+          if (s >= MIC_MAX && rec) {
+            rec.mr.stop();
+            toast('Tempo máximo de 1 minuto e meio atingido.');
+          }
+        };
+        tick();
+        rec.timer = setInterval(tick, 250);
+        return true;
+      }
+
+      /* ---------- voz: texto ao vivo + gravação ----------
+         O ditado do navegador mostra uma prévia enquanto a pessoa fala e é religado a cada pausa
+         (nada do que já apareceu é apagado). Em paralelo, a gravação não para nas pausas.
+         Ao terminar, a IA transcreve a gravação (com pontuação, nomes e números mais certos)
+         e esse texto substitui a prévia; se a IA falhar, a prévia fica. */
+      async function iniciarCaptura() {
+        editadoPeloUsuario = false;
+        const antes = $('#fala').value.trim();
+        const c = {
+          ativo: true,
+          antes: antes ? antes + ' ' : '',
+          base: '',
+          sessao: '',
+          lacuna: false,
+          bruto: '',
+          corte: 0,
+          sr: null,
+          inicio: Date.now(),
+          timer: null,
+          gravando: false,
+          reinicios: [],
+        };
+        c.base = c.antes;
+        cap = c;
+        const novaSR = () => {
+          const r = new SR();
+          r.lang = 'pt-BR';
+          r.continuous = IOS || !MOBILE; // Android encerra a cada frase de qualquer jeito
+          r.interimResults = true;
+          r.maxAlternatives = 1;
+          r.onresult = e => {
+            if (cap !== c || !c.ativo) return;
+            let t = '';
+            for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+            c.bruto = t;
+            // Depois de uma edição, só entra o que for falado dali em diante.
+            c.sessao = t.slice(c.corte);
+            mostrarTexto(c.base + c.sessao.replace(/^\s+/, ''));
+          };
+          r.onerror = e => {
+            if (e.error !== 'no-speech' && e.error !== 'aborted') c.lacuna = true;
+          };
+          r.onend = () => {
+            if (c.sessao.trim()) {
+              c.base += c.sessao.trim() + ' ';
+              c.sessao = '';
+            }
+            c.bruto = '';
+            c.corte = 0;
+            if (cap !== c || !c.ativo) return;
+            mostrarTexto(c.base);
+            c.lacuna = true; // pausa: pode ter perdido um pedaço
+            const agora = Date.now();
+            c.reinicios = c.reinicios.filter(t => agora - t < 4000);
+            c.reinicios.push(agora);
+            if (c.reinicios.length > 6) {
+              c.sr = null;
+              return;
+            } // religando sem parar: desiste do ao vivo
+            try {
+              c.sr = novaSR();
+              c.sr.start();
+            } catch (e) {
+              c.sr = null;
+            }
+          };
+          return r;
+        };
+        try {
+          c.sr = novaSR();
+          c.sr.start();
+        } catch (e) {
+          c.sr = null;
+          c.lacuna = true;
+        }
+        modoGravando(true);
+        c.gravando = await iniciarGravacao({
+          aoParar: (blob, curto) => fecharCaptura(c, curto ? null : blob),
+        });
+        if (cap !== c) return;
+        if (!c.gravando && !c.sr) {
+          cap = null;
+          modoGravando(false);
+          status(LEAD);
+          toast('Permita o uso do microfone nas configurações do navegador.');
+          return;
+        }
+        const tick = () => {
+          const s = Math.floor((Date.now() - c.inicio) / 1000);
+          status(`${c.sr ? 'Ouvindo' : 'Gravando'} ${tempo(s)} · pode pausar · ■ para terminar`, true);
+          if (s >= MIC_MAX) {
+            pararCaptura();
+            toast('Tempo máximo de 1 minuto e meio atingido.');
+          }
+        };
+        tick();
+        c.timer = setInterval(tick, 250);
+      }
+      function encerrarAoVivo(c) {
+        c.ativo = false;
+        clearInterval(c.timer);
+        if (c.sessao.trim()) {
+          c.base += c.sessao.trim() + ' ';
+          c.sessao = '';
+        }
+        mostrarTexto(c.base); // guarda tudo o que já apareceu
+        try {
+          if (c.sr) c.sr.stop();
+        } catch (e) {}
+      }
+      function pararCaptura() {
+        const c = cap;
+        if (!c || !c.ativo) return;
+        encerrarAoVivo(c);
+        if (c.gravando && rec) rec.mr.stop();
+        else fecharCaptura(c, null);
+      }
+      function fecharCaptura(c, blob) {
+        if (cap !== c) return;
+        if (c.ativo) encerrarAoVivo(c); // a gravação parou sozinha
+        cap = null;
+        modoGravando(false);
+        const vivo = $('#fala').value.trim().length > c.antes.trim().length;
+        if (blob && editadoPeloUsuario) {
+          // Editou durante a gravação: não substitui; a revisão pela IA fica opcional.
+          ultimoAudio = { blob, antes: c.antes, vivo };
+          $('#reenviar').textContent = 'Revisar com IA';
+          $('#reenviar').hidden = false;
+          textoPronto('Mantive o texto que você editou. “Revisar com IA” é opcional.');
+        } else if (blob) {
+          ultimoAudio = { blob, antes: c.antes, vivo };
+          transcrever(ultimoAudio);
+        } else if (vivo) textoPronto('Confira o texto e toque em “Confirmar”.');
+        else nadaOuvido('Não ouvi nada. Tente de novo.');
+      }
+
+      $('#mic').addEventListener('click', () => {
+        if (cap) return pararCaptura();
+        if (rec) return rec.mr.stop();
+        if (SR)
+          iniciarCaptura(); // prévia ao vivo + gravação transcrita pela IA
+        else iniciarGravacao(); // sem ditado: só grava e transcreve
+      });
+
+      /* ---------- compartilhar ---------- */
+      function toast(msg) {
+        const t = $('#toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._h);
+        t._h = setTimeout(() => t.classList.remove('show'), 2500);
+      }
+      async function copyText(txt) {
+        try {
+          await navigator.clipboard.writeText(txt);
+          return true;
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = txt;
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        }
+      }
+      function summaryText() {
+        const R = compute(),
+          L = [];
+        L.push(`*Racha Conta – ${new Date().toLocaleDateString('pt-BR')}*`, '');
+        S.bills.forEach(b => {
+          const who = Object.keys(R.shares[b.id])
+            .map(id => person(id).name)
+            .join(', ');
+          L.push(
+            `• ${b.name || 'Conta'}: ${fmt(withService(b))}${b.payer && person(b.payer) ? ` (pago por ${person(b.payer).name})` : ''} — ${who || 'ninguém'}`,
+          );
+        });
+        if (S.service) L.push(`(inclui ${showNum(S.service)}% de taxa de serviço)`);
+        L.push('', '*Parte de cada um*');
+        S.people.forEach(p => L.push(`• ${p.name}: ${fmt(R.owe[p.id])}`));
+        if (R.transfers.length) {
+          L.push('', '*Acertos*');
+          R.proprias.forEach(([f, , v]) =>
+            L.push(`• ${person(f).name} → ${person(f).name} (própria parte): ${fmt(v)}`),
+          );
+          R.transfers.forEach(([f, t, v]) => L.push(`• ${person(f).name} → ${person(t).name}: ${fmt(v)}`));
+        }
+        return L.join('\n');
+      }
+      $('#copy').addEventListener('click', async () =>
+        toast(
+          (await copyText(summaryText())) ? 'Resumo copiado – cole no WhatsApp' : 'Não foi possível copiar',
+        ),
+      );
+      $('#share').addEventListener('click', async () => {
+        const url = location.origin + location.pathname + '#d=' + encode(S);
+        toast(
+          (await copyText(url)) ? 'Link copiado – quem abrir vê estas contas' : 'Não foi possível copiar',
+        );
+      });
+      $('#salvarModelo').addEventListener('click', () => {
+        const dados = JSON.parse(JSON.stringify(S));
+        dados.bills = dados.bills
+          .filter(b => b.name.trim() || b.amount)
+          .map(b => ({ ...b, uncertain: false }));
+        try {
+          localStorage.setItem(KEY_MODELO, JSON.stringify({ salvoEm: Date.now(), dados }));
+          toast('Modelo da casa salvo neste aparelho');
+        } catch (e) {
+          toast('Não foi possível salvar neste navegador.');
+        }
+        renderCasa();
+      });
+      $('#excluirModelo').addEventListener('click', e => {
+        const btn = e.currentTarget;
+        if (!btn.classList.contains('armed')) {
+          btn.classList.add('armed');
+          btn.textContent = 'Toque de novo para excluir';
+          clearTimeout(btn._t);
+          btn._t = setTimeout(() => {
+            btn.classList.remove('armed');
+            btn.textContent = 'Excluir modelo';
+          }, 3000);
+          return;
+        }
+        clearTimeout(btn._t);
+        btn.classList.remove('armed');
+        btn.textContent = 'Excluir modelo';
+        try {
+          localStorage.removeItem(KEY_MODELO);
+        } catch (err) {}
+        S = casaPadrao();
+        renderAll();
+        toast('Modelo excluído: voltei às regras fixas da casa');
+      });
+      try {
+        if (window.self !== window.top) $('#share').style.display = 'none';
+      } catch (e) {
+        $('#share').style.display = 'none';
+      }
+
+      renderAll();
+    </script>
+  </body>
 </html>
