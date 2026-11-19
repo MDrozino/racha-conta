@@ -497,6 +497,15 @@
       .pos {
         color: var(--accent);
       }
+      .aviso {
+        margin: 10px 0 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--hl-soft);
+        border: 1px solid var(--hl);
+        color: #6b5200;
+        font-size: 14px;
+      }
       .transfers {
         list-style: none;
         padding: 0;
@@ -670,6 +679,7 @@
         <div>
           <h2>Acertos</h2>
           <ul class="transfers" id="transfers"></ul>
+          <p class="aviso" id="semPagador" hidden></p>
         </div>
       </section>
 
@@ -934,6 +944,14 @@
               )
               .join('')
           : '<li class="muted">Ninguém deve nada a ninguém.</li>';
+
+        // Contas sem "Pago por" não entram nos acertos: avisa para não passar despercebido.
+        const semPagador = S.bills.filter(b => b.amount && !(b.payer && person(b.payer))).length;
+        $('#semPagador').hidden = !semPagador || !P.length;
+        $('#semPagador').textContent =
+          semPagador === 1
+            ? '⚠ 1 conta está como “Ainda não foi paga” e não entra nos acertos.'
+            : `⚠ ${semPagador} contas estão como “Ainda não foi paga” e não entram nos acertos.`;
       }
 
       function renderCasa() {

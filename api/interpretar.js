@@ -47,6 +47,11 @@ Regras de extração:
 - "todo mundo", "todos", "a galera": todas as pessoas presentes.
 - Se não for dito quem consumiu um item, considere todas as pessoas e marque incerto true.
 - pagador: nome de quem pagou o item ("o João pagou tudo" vale para todos os itens). Se não foi dito, deixe vazio.
+- Quando alguém pagou um GRUPO de itens, coloque essa pessoa como pagador de CADA item do grupo:
+  "as bebidas" = chopp, cerveja, caipirinha, drinks, vinho, refrigerante, água, suco e afins;
+  "a comida" = porções, petiscos, pratos, pizza, lanches, sobremesas e afins;
+  "o resto" / "o restante" = todos os itens que ainda ficaram sem pagador.
+  Exemplo: "o Lucas pagou a pizza e a Carol pagou as bebidas" → pizza: Lucas; cada bebida: Carol.
 - taxa_servico_percent: taxa de serviço/gorjeta em porcentagem ("10% do garçom" = 10). Se não foi dita, 0.
 - Valores falados por extenso viram números ("três mil" = 3000, "doze e cinquenta" = 12.5).
 - Marque incerto true sempre que precisar adivinhar valor, quantidade ou quem consumiu.`;
